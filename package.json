@@ -1,0 +1,68 @@
+{
+  "name": "fs-un",
+  "type": "module",
+  "version": "0.0.1",
+  "description": "unified util to manage files and directories inside a directory on different platforms",
+  "author": "subframe7536",
+  "license": "MIT",
+  "repository": "",
+  "keywords": [
+    "typescript",
+    "file system access"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./browser": {
+      "import": "./dist/browser.js",
+      "require": "./dist/browser.cjs"
+    }
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "typesVersions": {
+    "*": {
+      "browser": [
+        "./dist/browser.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "browser.d.ts",
+    "browser.js",
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite serve dev",
+    "build": "tsup",
+    "release": "pnpm test && pnpm run build && bumpp --all && npm publish",
+    "test": "vitest --run"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "peerDependencies": {
+    "@types/wicg-file-system-access": "^2020.9.8"
+  },
+  "dependencies": {
+    "pathe": "^1.1.2"
+  },
+  "devDependencies": {
+    "@subframe7536/eslint-config": "^0.5.9",
+    "@subframe7536/type-utils": "^0.1.4",
+    "@types/node": "^20.11.16",
+    "bumpp": "^9.3.0",
+    "eslint": "^8.56.0",
+    "idb-keyval": "^6.2.1",
+    "solid-dollar": "^0.6.7",
+    "solid-js": "^1.8.12",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vite-plugin-solid": "^2.9.1",
+    "vitest": "^1.2.2"
+  }
+}

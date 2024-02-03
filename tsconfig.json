@@ -1,0 +1,15 @@
+{
+  "extends": "@subframe7536/type-utils/tsconfig.json",
+  "compilerOptions": {
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
+    "useDefineForClassFields": true,
+    "types": [
+      "@types/wicg-file-system-access",
+      "node"
+    ],
+    "isolatedModules": true
+  }
+}

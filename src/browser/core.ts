@@ -1,4 +1,4 @@
-import { parseStringWithDate } from '../utils'
+import { parseJsonStringWithDate } from '../utils'
 import type { CopyOptions, DirectoryManager, FileAttr, FindOptions, MoveOptions } from '../types'
 import { UnsupportedError, buildDirectoryMap, copy, isDirectoryHandle, isFileHandle, isSupportFs, parseFilename } from './utils'
 import type { WebFileMap } from './utils'
@@ -93,7 +93,7 @@ export class BrowserDirectoryManager implements DirectoryManager<Uint8Array> {
     const { dirPath, name } = this.parsePath(path)
     let handle = this.map.get(dirPath)
     if (!handle) {
-      await this.mkdir(dirPath)
+      await this.ensureDir(dirPath)
       handle = this.map.get(dirPath)
     }
     return {
@@ -122,7 +122,7 @@ export class BrowserDirectoryManager implements DirectoryManager<Uint8Array> {
     }
   }
 
-  public async mkdir(path: string): Promise<void> {
+  public async ensureDir(path: string): Promise<void> {
     const dirs = path.split('/').filter(Boolean)
     const base = dirs.shift()
     if (!base || base === '.') {
@@ -182,7 +182,7 @@ export class BrowserDirectoryManager implements DirectoryManager<Uint8Array> {
       case 'text':
         return file.text()
       case 'json':
-        return parseStringWithDate(await file.text())
+        return parseJsonStringWithDate(await file.text())
     }
   }
 

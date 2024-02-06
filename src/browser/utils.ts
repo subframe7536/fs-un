@@ -39,8 +39,8 @@ export function isDirectoryHandle(handle: FileSystemHandle): handle is FileSyste
 export function parseFilename(filename: string) {
   const match = /.(\.[^./]+)$/.exec(filename)
   const ext = match ? match[1] : ''
-  const base = ext ? filename.slice(0, -ext.length) : filename
-  return { name: base, ext: ext.slice(1) }
+  const name = ext ? filename.slice(0, -ext.length) : filename
+  return { name, ext }
 }
 
 // export type WebFS = WeakMap<string[], FileSystemDirectoryHandle>

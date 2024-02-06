@@ -12,7 +12,7 @@ export type BaseFileAttr = {
    */
   name: string
   /**
-   * extension name without dot
+   * extension name with dot
    */
   ext: string
 }
@@ -53,25 +53,23 @@ export type CopyOptions = {
 
 // todo: https://docs.obsidian.md/Reference/TypeScript+API/FileSystemAdapter#Methods
 export interface DirectoryManager<BufferType> {
-  find(path: string, options: FindOptions): Promise<string[]>
+  find: (path: string, options: FindOptions) => Promise<string[]>
 
-  read(path: string, type: 'buffer'): Promise<BufferType>
-  read(path: string, type: 'text'): Promise<string>
-  read<K = any>(path: string, type: 'json'): Promise<K>
+  read: ((path: string, type: 'buffer') => Promise<BufferType>) & ((path: string, type: 'text') => Promise<string>) & (<K = any>(path: string, type: 'json') => Promise<K>)
 
-  write(path: string, data: string | BufferType | object, writeFn?: (data: any) => string): Promise<void>
+  write: (path: string, data: string | BufferType | object, writeFn?: (data: any) => string) => Promise<void>
 
-  parseDir(path: string, cb?: (path: string, attr: FileAttr) => (FileAttr | undefined)): Promise<FileAttr[]>
+  parseDir: (path: string, cb?: (path: string, attr: FileAttr) => (FileAttr | undefined)) => Promise<FileAttr[]>
 
-  parseFileAttr(path: string, root: string): Promise<FileAttr>
+  parseFileAttr: (path: string, root: string) => Promise<FileAttr>
 
-  exists(path: string): Promise<'file' | 'dir' | 'other' | false>
+  exists: (path: string) => Promise<'file' | 'dir' | 'other' | false>
 
-  mkdir(path: string): Promise<void>
+  ensureDir: (path: string) => Promise<void>
 
-  move(from: string, to: string, options?: MoveOptions): Promise<void>
+  move: (from: string, to: string, options?: MoveOptions) => Promise<void>
 
-  copy(from: string, to: string, options?: CopyOptions): Promise<void>
+  copy: (from: string, to: string, options?: CopyOptions) => Promise<void>
 
-  remove(path: string): Promise<void>
+  remove: (path: string) => Promise<void>
 }

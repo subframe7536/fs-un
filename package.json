@@ -51,14 +51,14 @@
     "pathe": "^1.1.2"
   },
   "devDependencies": {
-    "@subframe7536/eslint-config": "^0.5.9",
+    "@subframe7536/eslint-config": "^0.5.10",
     "@subframe7536/type-utils": "^0.1.4",
     "@types/node": "^20.11.16",
     "bumpp": "^9.3.0",
     "eslint": "^8.56.0",
     "idb-keyval": "^6.2.1",
     "solid-dollar": "^0.6.7",
-    "solid-js": "^1.8.12",
+    "solid-js": "^1.8.14",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",
     "vite": "^5.0.12",

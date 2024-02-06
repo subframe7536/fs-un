@@ -8,6 +8,9 @@ type WalkOptions<T> = {
   allowNullish?: T
 }
 
+/**
+ * create a directory, auto skip if exists
+ */
 export async function mkdir(path: string): Promise<string | undefined> {
   try {
     return await fs.mkdir(path, { recursive: true })
@@ -18,6 +21,9 @@ export async function mkdir(path: string): Promise<string | undefined> {
     throw err
   }
 }
+/**
+ * copy files or directories, auto create parent directory
+ */
 export async function copy(
   from: string,
   to: string,
@@ -73,6 +79,9 @@ export async function copy(
   }
 }
 
+/**
+ * check if path exists, if second param is true, will check 'link'
+ */
 export async function exists(path: string, link: false): Promise<'file' | 'dir' | 'other' | false>
 export async function exists(path: string): Promise<'file' | 'dir' | 'other' | 'link' | false>
 export async function exists(path: string, link = true): Promise<'file' | 'dir' | 'other' | 'link' | false> {
@@ -95,14 +104,20 @@ export async function exists(path: string, link = true): Promise<'file' | 'dir' 
   }
 }
 
-export async function find(path: string, { match, recursive }: FindOptions): Promise<string[]> {
+/**
+ * recursively search files
+ */
+export async function find(path: string, options: FindOptions): Promise<string[]> {
   return walkDir(
     path,
-    async str => match(str, await exists(str) === 'file') ? str : undefined,
-    recursive ? undefined : { dirDepth: 1 },
+    async str => options.match(str, await exists(str) === 'file') ? str : undefined,
+    options.recursive ? undefined : { dirDepth: 1 },
   )
 }
 
+/**
+ * list directory and parse attributes
+ */
 export async function parseDir(
   path: string,
   cb?: (path: string, attr: FileAttr) => (FileAttr | undefined),
@@ -113,12 +128,18 @@ export async function parseDir(
   })
 }
 
+/**
+ * parse file attributes
+ */
 export async function parseFileAttr(path: string, rootPath?: string): Promise<FileAttr> {
   const { size, mtime: modifiedTime } = await fs.stat(path)
   const { dir, name, ext } = parse(rootPath ? relative(rootPath, path) : path)
-  return { dir, name, ext: ext.slice(1), size, modifiedTime }
+  return { dir, name, ext, size, modifiedTime }
 }
 
+/**
+ * read file as buffer or text or json or custom
+ */
 export async function read(path: string, type: 'buffer'): Promise<Buffer>
 export async function read(path: string, type: 'text'): Promise<string>
 export async function read<T = any>(path: string, type: 'json', parse?: (str: string) => any): Promise<T>
@@ -133,6 +154,9 @@ export async function read(path: string, type: 'buffer' | 'text' | 'json', parse
   }
 }
 
+/**
+ * write file, auto create parent directory
+ */
 export async function write(
   path: string,
   data: Parameters<typeof fs.writeFile>[1],
@@ -141,7 +165,7 @@ export async function write(
   try {
     await fs.writeFile(path, data, options)
   } catch (err) {
-    if (!isNotExistError(err)) {
+    if (isNotExistError(err)) {
       await fs.mkdir(dirname(path), { recursive: true })
       await fs.writeFile(path, data, options)
     } else {
@@ -150,6 +174,11 @@ export async function write(
   }
 }
 
+/**
+ * move files or directories, auto create parent directory.
+ *
+ * if target is another device, copy file to target first and remove source
+ */
 export async function move(
   from: string,
   to: string,
@@ -179,6 +208,9 @@ export async function move(
   }
 }
 
+/**
+ * remove directory and files recursively
+ */
 export async function remove(path: string): Promise<void> {
   await fs.rm(path, { recursive: true, maxRetries: 3, retryDelay: 500, force: true })
 }
@@ -214,14 +246,23 @@ async function walkDir<T, N = false>(
   return files as any
 }
 
+/**
+ * error code is `ENOENT`
+ */
 export function isNotExistError(err: unknown) {
   return (err as any)?.code === 'ENOENT'
 }
 
+/**
+ * error code is `EXDEV`
+ */
 export function isAnotherDeviceError(err: unknown) {
   return (err as any)?.code === 'EXDEV'
 }
 
+/**
+ * error code is `EEXIST`
+ */
 export function isAlreadyExistError(err: unknown) {
   return (err as any)?.code === 'EEXIST'
 }

@@ -21,6 +21,9 @@ export function createNodeDirectoryManager(options: DirOptions) {
   return new NodeDirectoryManager(rootPath, filter)
 }
 
+/**
+ * all path is relative path
+ */
 export class NodeDirectoryManager implements DirectoryManager<Buffer> {
   public constructor(
     public rootPath: string,
@@ -43,7 +46,7 @@ export class NodeDirectoryManager implements DirectoryManager<Buffer> {
     return await _.find(this.full(path), options)
   }
 
-  public async mkdir(path: string): Promise<void> {
+  public async ensureDir(path: string): Promise<void> {
     await _.mkdir(this.full(path))
   }
 
@@ -64,9 +67,9 @@ export class NodeDirectoryManager implements DirectoryManager<Buffer> {
 
   async read(path: string, type: 'buffer'): Promise<Buffer>
   async read(path: string, type: 'text'): Promise<string>
-  async read<K = any>(path: string, type: 'json'): Promise<K>
-  async read(path: string, type: any) {
-    return await _.read(this.full(path), type) as any
+  async read<K = any>(path: string, type: 'json', parse?: (str: string) => any): Promise<K>
+  async read(path: string, type: any, parse = JSON.parse): Promise<any> {
+    return await _.read(this.full(path), type, parse) as any
   }
 
   async remove(path: string): Promise<void> {

@@ -1,5 +1,5 @@
 import { parseJsonStringWithDate } from '../utils'
-import type { CopyOptions, DirectoryManager, FileAttr, FindOptions, MoveOptions } from '../types'
+import type { CopyOptions, DirectoryManager, FileAttr, FindOptions, MoveOptions, PathType } from '../types'
 import { UnsupportedError, buildDirectoryMap, copy, isDirectoryHandle, isFileHandle, isSupportFs, parseFilename } from './utils'
 import type { WebFileMap } from './utils'
 
@@ -50,7 +50,7 @@ export class BrowserDirectoryManager implements DirectoryManager<Uint8Array> {
     }
   }
 
-  public async exists(path: string): Promise<'file' | 'dir' | 'other' | false> {
+  public async exists(path: string): Promise<PathType> {
     if (!this.map.has(path)) {
       return false
     }
@@ -171,9 +171,9 @@ export class BrowserDirectoryManager implements DirectoryManager<Uint8Array> {
     }
   }
 
-  public async read(path: string, type: 'buffer'): Promise<Uint8Array>
-  public async read(path: string, type: 'text'): Promise<string>
-  public async read<K = any>(path: string, type: 'json'): Promise<K>
+  public async read(path: string, type: 'buffer'): Promise<Uint8Array | undefined>
+  public async read(path: string, type: 'text'): Promise<string | undefined>
+  public async read<K = any>(path: string, type: 'json'): Promise<K | undefined>
   public async read(path: string, type: 'buffer' | 'text' | 'json') {
     const file = await (await this.getFileHandle(path)).getFile()
     switch (type) {

@@ -38,7 +38,8 @@
     "dev": "vite serve dev",
     "build": "tsup",
     "release": "pnpm test && pnpm run build && bumpp --all && npm publish",
-    "test": "vitest --run"
+    "test": "vitest --run",
+    "test:dev": "vitest ./tests/node/copy.test.ts"
   },
   "publishConfig": {
     "access": "public",

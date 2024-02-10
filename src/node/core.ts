@@ -1,5 +1,5 @@
 import { join } from 'pathe'
-import type { CopyOptions, DirectoryManager, FileAttr, FilterFn, FindOptions, MoveOptions } from '../types'
+import type { CopyOptions, DirectoryManager, FileAttr, FilterFn, FindOptions, MoveOptions, PathType } from '../types'
 import * as _ from './utils'
 
 export type DirOptions = {
@@ -38,7 +38,7 @@ export class NodeDirectoryManager implements DirectoryManager<Buffer> {
     await _.copy(this.full(from), this.full(to), options)
   }
 
-  public async exists(path: string): Promise<false | 'file' | 'dir' | 'other'> {
+  public async exists(path: string): Promise<PathType> {
     return await _.exists(this.full(path), false)
   }
 
@@ -46,8 +46,8 @@ export class NodeDirectoryManager implements DirectoryManager<Buffer> {
     return await _.find(this.full(path), options)
   }
 
-  public async ensureDir(path: string): Promise<void> {
-    await _.mkdir(this.full(path))
+  public async ensureDir(path: string): Promise<string | undefined> {
+    return await _.mkdir(this.full(path))
   }
 
   public async move(from: string, to: string, options?: MoveOptions | undefined): Promise<void> {
@@ -65,9 +65,9 @@ export class NodeDirectoryManager implements DirectoryManager<Buffer> {
     return await _.parseFileAttr(this.full(path))
   }
 
-  async read(path: string, type: 'buffer'): Promise<Buffer>
-  async read(path: string, type: 'text'): Promise<string>
-  async read<K = any>(path: string, type: 'json', parse?: (str: string) => any): Promise<K>
+  async read(path: string, type: 'buffer'): Promise<Buffer | undefined>
+  async read(path: string, type: 'text'): Promise<string | undefined>
+  async read<K = any>(path: string, type: 'json', parse?: (str: string) => any): Promise<K | undefined>
   async read(path: string, type: any, parse = JSON.parse): Promise<any> {
     return await _.read(this.full(path), type, parse) as any
   }

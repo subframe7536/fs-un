@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { NodeDirectoryManager } from '../../src'
 import { basePath } from '../utils'
 
-const manager = new NodeDirectoryManager(basePath)
+const manager = await NodeDirectoryManager.init(basePath)
 
 describe('test copy file', () => {
   const dirName = 'copyFileTest'
@@ -63,16 +63,19 @@ describe('test copy file', () => {
 })
 
 describe('test copy dir', () => {
-  const dirName = 'copyDirTest'
+  const dirName1 = 'copyDirTest'
+  const dirName2 = 'copyDirTest1'
   beforeEach(async () => {
-    await manager.ensureDir(dirName)
+    await manager.ensureDir(dirName1)
+    await manager.ensureDir(dirName2)
   })
   afterEach(async () => {
-    await manager.remove(dirName)
+    await manager.remove(dirName1)
+    await manager.remove(dirName2)
   })
   it('basic', async () => {
-    const sourcePath = join(dirName, 'tempDir')
-    const targetPath = join(dirName, 'non-exist', 'tempDir1')
+    const sourcePath = join(dirName1, 'tempDir')
+    const targetPath = join(dirName1, 'non-exist', 'tempDir1')
 
     await manager.ensureDir(sourcePath)
     await manager.ensureDir(join(sourcePath, 'temp'))
@@ -84,41 +87,38 @@ describe('test copy dir', () => {
     expect(await manager.exists(join(targetPath, 'temp.txt'))).toBe('file')
     expect(await manager.read(join(targetPath, 'temp.txt'), 'text')).toBe('Hello, world!')
   })
-  // it('target file path have already exists a file', async () => {
-  //   const sourcePath = join(dirName, 'tempSameFile')
-  //   const targetPath = join(dirName, 'tempSameFileCopy')
+  it('target dir path have already exists a dir', async () => {
+    const dirPath1 = join(dirName1, 'tempSameDir')
+    const dirPath2 = join(dirName2, 'tempSameDir')
 
-  //   await manager.write(sourcePath, 'Hello, world!')
-  //   await manager.write(targetPath, '111')
+    await manager.ensureDir(dirPath1)
+    await manager.ensureDir(dirPath2)
 
-  //   await manager.copy(sourcePath, targetPath, { overwrite: true })
+    await manager.copy(dirPath1, dirPath2, { overwrite: true })
 
-  //   expect(await manager.exists(targetPath)).toBe('file')
-  //   expect(await manager.read(targetPath, 'text')).toBe('Hello, world!')
+    expect(await manager.exists(dirPath2)).toBe('dir')
 
-  //   // overwrite: false
-  //   const targetPath2 = join(dirName, 'tempSameFile2')
+    // overwrite: false
+    const dirPath3 = join(dirName1, 'tempSameDir1')
 
-  //   await manager.write(targetPath2, 'Hello, world!')
-  //   expect(manager.copy(targetPath, targetPath2, { overwrite: false })).rejects.toThrowError()
-  // })
+    await manager.ensureDir(dirPath3)
+    expect(manager.copy(dirPath2, dirPath3, { overwrite: false })).rejects.toThrowError()
+  })
 
-  // it('target file path have already exists a dir', async () => {
-  //   const sourcePath = join(dirName, 'tempSameDir')
-  //   const targetPath = join(dirName, 'tempSameDirCopy')
+  it('target dir path have already exists a file', async () => {
+    const dirPath1 = join(dirName1, 'tempSameFile')
+    const dirPath2 = join(dirName2, 'tempSameFile')
 
-  //   await manager.write(sourcePath, 'Hello, world!')
-  //   await manager.ensureDir(targetPath)
+    await manager.ensureDir(dirPath1)
+    await manager.write(dirPath2, '111')
 
-  //   await manager.copy(sourcePath, targetPath, { overwrite: true })
+    await manager.copy(dirPath1, dirPath2, { overwrite: true })
 
-  //   expect(await manager.exists(targetPath)).toBe('file')
-  //   expect(await manager.read(targetPath, 'text')).toBe('Hello, world!')
+    expect(await manager.exists(dirPath2)).toBe('dir')
 
-  //   // overwrite: false
-  //   const targetPath2 = join(dirName, 'tempDir2')
-
-  //   await manager.ensureDir(targetPath2)
-  //   expect(manager.copy(targetPath, targetPath2, { overwrite: false })).rejects.toThrowError()
-  // })
+    // overwrite: false
+    const dirPath3 = join(dirName1, 'tempSameFile1')
+    await manager.write(dirPath3, '111')
+    expect(manager.copy(dirPath2, dirPath3, { overwrite: false })).rejects.toThrowError()
+  })
 })

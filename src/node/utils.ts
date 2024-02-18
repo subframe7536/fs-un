@@ -58,11 +58,13 @@ export async function copy(
 ): Promise<void> {
   const { match, overwrite } = options
   const status = await exists(to)
-  if (!overwrite && status) {
-    throw new Error(`dest path "${to}" already exists, cannot overwrite`)
-  } else if (overwrite && status === 'dir') {
-    await remove(to)
-  } else if (!status) {
+  if (status) {
+    if (overwrite) {
+      await remove(to)
+    } else {
+      throw new Error(`dest path "${to}" already exists, cannot overwrite`)
+    }
+  } else {
     await mkdir(dirname(to))
   }
 
@@ -176,7 +178,7 @@ export async function read(path: string, type: 'buffer' | 'text' | 'json', parse
         return parse(await fs.readFile(path, 'utf-8'))
     }
   } catch (error) {
-    if (isNotExistError(error)) {
+    if (isNotExistError(error) || isDirError(error)) {
       return undefined
     }
     throw error
@@ -197,6 +199,8 @@ export async function write(
     if (isNotExistError(err)) {
       await fs.mkdir(dirname(path), { recursive: true })
       await fs.writeFile(path, data, options)
+    } else if (isDirError(err)) {
+      throw new Error(`"${path}" exists a directory, cannot write`)
     } else {
       throw err
     }
@@ -226,7 +230,7 @@ export async function move(
   try {
     await fs.rename(from, to)
   } catch (err) {
-    if ((isDir(err) || isNoPermission(err)) && overwrite) {
+    if ((isDirError(err) || isNoPermissionError(err)) && overwrite) {
       await remove(to)
       await fs.rename(from, to)
     } else if (isAnotherDeviceError(err)) {
@@ -308,14 +312,14 @@ export function isAnotherDeviceError(err: unknown) {
 /**
  * error code is `EISDIR`
  */
-export function isDir(err: unknown) {
+export function isDirError(err: unknown) {
   return (err as any)?.code === 'EISDIR'
 }
 
 /**
  * error code is `EPERM`
  */
-export function isNoPermission(err: unknown) {
+export function isNoPermissionError(err: unknown) {
   return (err as any)?.code === 'EPERM'
 }
 

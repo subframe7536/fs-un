@@ -13,22 +13,18 @@ export type DirOptions = {
   filter?: FilterFn
 }
 
-export function createNodeDirectoryManager(options: DirOptions) {
-  const { rootPath, filter } = options
-  if (!_.exists(rootPath)) {
-    throw new Error(`root path not exist: ${rootPath}`)
-  }
-  return new NodeDirectoryManager(rootPath, filter)
-}
-
 /**
  * all path is relative path
  */
 export class NodeDirectoryManager implements DirectoryManager<Buffer> {
-  public constructor(
+  private constructor(
     public rootPath: string,
     private filter?: (path: string, attr: FileAttr) => (FileAttr | undefined),
   ) { }
+
+  public static async init(rootPath: string, filter?: (path: string, attr: FileAttr) => (FileAttr | undefined)) {
+    return new NodeDirectoryManager(rootPath, filter)
+  }
 
   private full(p: string) {
     return join(this.rootPath, p)

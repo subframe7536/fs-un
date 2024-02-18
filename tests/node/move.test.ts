@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { basePath } from '../utils'
 import { NodeDirectoryManager } from '../../src'
 
-const manager = new NodeDirectoryManager(basePath)
+const manager = await NodeDirectoryManager.init(basePath)
 
 describe('test move file', () => {
   const dirName1 = 'moveFileTest1'

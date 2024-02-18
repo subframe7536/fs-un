@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { basePath } from '../utils'
 import { NodeDirectoryManager, parseJsonStringWithDate } from '../../src'
 
-const manager = new NodeDirectoryManager(basePath)
+const manager = await NodeDirectoryManager.init(basePath)
 
 const dirName = 'rwTest'
 

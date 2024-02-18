@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { NodeDirectoryManager } from '../../src'
 import { basePath } from '../utils'
 
-const manager = new NodeDirectoryManager(basePath)
+const manager = await NodeDirectoryManager.init(basePath)
 describe('test ensureDir', () => {
   const dirName = 'testEnsureDir'
   beforeEach(async () => {

@@ -1,20 +1,13 @@
-import { existsSync, promises as fs } from 'node:fs'
-import { basename, dirname, join, parse, relative, resolve } from 'pathe'
+import type { Dirent } from 'node:fs'
+import { existsSync, promises as fsp } from 'node:fs'
+import { readdir } from 'node:fs/promises'
+import { basename, dirname, extname, join, parse, relative, resolve } from 'pathe'
 import type { Promisable } from '@subframe7536/type-utils'
-import type { CopyOptions, FileAttr, FindOptions, MoveOptions, PathType } from '../types'
+import type { CopyOptions, FileAttr, FindOptions, MoveOptions, PathType, WalkQueueItem } from '../types'
+import { type Options, type ReaddirFn, walk } from '../utils/walk'
 
-type WalkOptions<T> = {
-  /**
-   * max dir depth
-   * @default Number.POSITIVE_INFINITY
-   */
-  maxDepth?: number
-  /**
-   * whether to filter `null` and `undefined`
-   * @default true
-   */
-  filterNullish?: T
-}
+const readdirFn: ReaddirFn = path => readdir(path, { withFileTypes: true })
+  .then(dirent => dirent.map(dirent => ({ isDir: dirent.isDirectory(), name: dirent.name })))
 
 /**
  * create a directory, auto skip if exists
@@ -23,7 +16,7 @@ type WalkOptions<T> = {
  */
 export async function mkdir(path: string): Promise<string | undefined> {
   try {
-    await fs.mkdir(path, { recursive: true })
+    await fsp.mkdir(path, { recursive: true })
     return path
   } catch (err) {
     if (isAlreadyExistError(err)) {
@@ -34,15 +27,15 @@ export async function mkdir(path: string): Promise<string | undefined> {
 }
 
 async function copyLink(from: string, to: string) {
-  const symlinkPointsAt = await fs.readlink(from)
+  const symlinkPointsAt = await fsp.readlink(from)
   try {
-    await fs.symlink(symlinkPointsAt, to)
+    await fsp.symlink(symlinkPointsAt, to)
   } catch (err) {
     // There is already file/symlink with this name on destination location.
     // Must erase it manually, otherwise system won't allow us to place symlink there.
     if (isAlreadyExistError(err)) {
-      await fs.unlink(to)
-      await fs.symlink(symlinkPointsAt, to)
+      await fsp.unlink(to)
+      await fsp.symlink(symlinkPointsAt, to)
     } else {
       throw err
     }
@@ -74,22 +67,27 @@ export async function copy(
         from.endsWith('asar') && process?.versions?.electron
           // eslint-disable-next-line ts/no-var-requires, ts/no-require-imports, unicorn/prefer-node-protocol
           ? require('original-fs').copyFileSync(from, to)
-          : await walkDir(from, async (srcPath, pathType) => {
-            const destPath = resolve(to, relative(from, srcPath))
-            if (pathType === 'dir') {
-              await mkdir(destPath)
-            } else if (!match || match(srcPath, pathType === 'file')) {
-              await mkdir(dirname(destPath))
-              await fs.copyFile(srcPath, destPath)
-            }
+          : await walk(from, readdirFn, {
+            includeDirs: true,
+            transform: async (srcPath, isDir) => {
+              const destPath = resolve(to, relative(from, srcPath))
+              if (isDir) {
+                await mkdir(destPath)
+              } else if (!match || match(srcPath, !isDir)) {
+                await mkdir(dirname(destPath))
+                await fsp.copyFile(srcPath, destPath)
+              }
+            },
           })
         break
       case 'file':
-        await fs.copyFile(from, to)
+        await fsp.copyFile(from, to)
         break
       case 'link':
         await copyLink(from, to)
         break
+      default:
+        throw new Error(`"${from}" not exists`)
     }
   } catch (err) {
     if (!isNotExistError(err)) {
@@ -103,11 +101,12 @@ export async function copy(
 /**
  * check if path exists, if second param is true, will check 'link'
  */
+export async function exists(path: Dirent): Promise<PathType>
 export async function exists(path: string, link: false): Promise<PathType>
 export async function exists(path: string): Promise<PathType | 'link'>
-export async function exists(path: string, link: boolean = true) {
+export async function exists(path: string | Dirent, link: boolean = true) {
   try {
-    const stat = await fs.stat(path)
+    const stat = typeof path === 'string' ? await fsp.lstat(path) : path
     if (stat.isDirectory()) {
       return 'dir'
     } else if (stat.isFile()) {
@@ -129,10 +128,14 @@ export async function exists(path: string, link: boolean = true) {
  * recursively search files
  */
 export async function find(path: string, options: FindOptions): Promise<string[]> {
-  return walkDir(
+  return walk(
     path,
-    async (str, pathType) => options.match(str, pathType === 'file') ? str : undefined,
-    options.recursive ? undefined : { maxDepth: 1 },
+    readdirFn,
+    {
+      includeDirs: true,
+      transform: async (str, isDir) => options.match(str, !isDir) ? str : undefined,
+      ...options.recursive ? undefined : { maxDepth: 1 },
+    },
   )
 }
 
@@ -143,20 +146,26 @@ export async function parseDir(
   path: string,
   cb?: (path: string, attr: FileAttr) => (FileAttr | undefined),
 ): Promise<FileAttr[]> {
-  return await walkDir(path, async (p, pathType) => {
-    if (pathType !== 'file') {
-      return undefined
-    }
-    const attr = await parseFileAttr(p, path)
-    return cb?.(path, attr) || attr
-  })
+  return await walk(
+    path,
+    readdirFn,
+    {
+      transform: async (p, isDir) => {
+        if (isDir) {
+          return undefined
+        }
+        const attr = await parseFileAttr(p, path)
+        return cb?.(path, attr) || attr
+      },
+    },
+  )
 }
 
 /**
  * parse file attributes
  */
 export async function parseFileAttr(path: string, rootPath?: string): Promise<FileAttr> {
-  const { size, mtime: modifiedTime } = await fs.stat(path)
+  const { size, mtime: modifiedTime } = await fsp.stat(path)
   const { dir, name, ext } = parse(rootPath ? relative(rootPath, path) : path)
   return { dir, name, ext, size, modifiedTime }
 }
@@ -171,11 +180,11 @@ export async function read(path: string, type: 'buffer' | 'text' | 'json', parse
   try {
     switch (type) {
       case 'buffer':
-        return await fs.readFile(path)
+        return await fsp.readFile(path)
       case 'text':
-        return await fs.readFile(path, 'utf-8')
+        return await fsp.readFile(path, 'utf-8')
       case 'json':
-        return parse(await fs.readFile(path, 'utf-8'))
+        return parse(await fsp.readFile(path, 'utf-8'))
     }
   } catch (error) {
     if (isNotExistError(error) || isDirError(error)) {
@@ -190,15 +199,15 @@ export async function read(path: string, type: 'buffer' | 'text' | 'json', parse
  */
 export async function write(
   path: string,
-  data: Parameters<typeof fs.writeFile>[1],
-  options?: Parameters<typeof fs.writeFile>[2],
+  data: Parameters<typeof fsp.writeFile>[1],
+  options?: Parameters<typeof fsp.writeFile>[2],
 ): Promise<void> {
   try {
-    await fs.writeFile(path, data, options)
+    await fsp.writeFile(path, data, options)
   } catch (err) {
     if (isNotExistError(err)) {
-      await fs.mkdir(dirname(path), { recursive: true })
-      await fs.writeFile(path, data, options)
+      await fsp.mkdir(dirname(path), { recursive: true })
+      await fsp.writeFile(path, data, options)
     } else if (isDirError(err)) {
       throw new Error(`"${path}" exists a directory, cannot write`)
     } else {
@@ -218,27 +227,29 @@ export async function move(
   options: MoveOptions = {},
 ): Promise<void> {
   const { overwrite, renameMode } = options
-  if (!overwrite && existsSync(to)) {
+  const toExists = existsSync(to)
+  if (!overwrite && toExists) {
     throw new Error(`target path "${to}" already exists, cannot overwrite`)
   }
   if (renameMode) {
-    to = join(dirname(from), basename(to))
+    const extName = extname(from)
+    to = join(dirname(from), basename(to, extName) + extName)
   }
   if (from === to) {
     return
   }
   try {
-    await fs.rename(from, to)
+    await fsp.rename(from, to)
   } catch (err) {
     if ((isDirError(err) || isNoPermissionError(err)) && overwrite) {
       await remove(to)
-      await fs.rename(from, to)
+      await fsp.rename(from, to)
     } else if (isAnotherDeviceError(err)) {
       await copy(from, to, { overwrite: true })
       await remove(from)
-    } else if (isNotExistError(err) && !existsSync(to)) {
+    } else if (isNotExistError(err) && !toExists) {
       await mkdir(dirname(to))
-      await fs.rename(from, to)
+      await fsp.rename(from, to)
     } else {
       throw err
     }
@@ -249,50 +260,7 @@ export async function move(
  * remove directory and files recursively
  */
 export async function remove(path: string): Promise<void> {
-  await fs.rm(path, { recursive: true, maxRetries: 3, retryDelay: 500, force: true })
-}
-
-type WalkQueue = {
-  currentPath: string
-  depth: number
-  pathType: PathType
-}[]
-
-/**
- * check dir exists and walk files
- */
-export async function walkDir<T, N = false>(
-  folder: string,
-  transform: (path: string, pathType: PathType) => Promisable<T>,
-  options: WalkOptions<N> = {},
-): Promise<N extends false ? Exclude<T, null | undefined>[] : T[]> {
-  if ((await exists(folder)) !== 'dir') {
-    throw new Error(`"${folder}" not exists or is not a dir`)
-  }
-  const queue: WalkQueue = [{ currentPath: folder, pathType: 'dir', depth: 0 }]
-  const files: T[] = []
-  const { filterNullish = true, maxDepth = Number.POSITIVE_INFINITY } = options
-  while (queue.length) {
-    const { currentPath, depth, pathType } = queue.shift()!
-
-    if (pathType === 'dir' && depth < maxDepth) {
-      const dirFiles = (await fs.readdir(currentPath))
-      await Promise.all(dirFiles.map(async (file) => {
-        const cur = join(currentPath, file)
-        queue.push({
-          currentPath: cur,
-          pathType: await exists(cur, false),
-          depth: depth + 1,
-        })
-      }))
-    }
-
-    const result = await transform(currentPath, pathType)
-    if (!filterNullish || (result !== null && result !== undefined)) {
-      files.push(result as T)
-    }
-  }
-  return files as any
+  await fsp.rm(path, { recursive: true, maxRetries: 3, retryDelay: 500, force: true })
 }
 
 /**

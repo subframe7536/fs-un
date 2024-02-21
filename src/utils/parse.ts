@@ -4,5 +4,3 @@ export function parseJsonStringWithDate(jsonString: string) {
     return dateRegex.test(v) ? new Date(v) : v
   })
 }
-
-export * from 'pathe'

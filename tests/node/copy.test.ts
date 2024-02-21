@@ -23,6 +23,12 @@ describe('test copy file', () => {
     expect(await manager.exists(targetPath)).toBe('file')
     expect(await manager.read(targetPath, 'text')).toBe('Hello, world!')
   })
+  it('source file not exist', async () => {
+    const sourcePath = join(dirName, 'tempFilenon-noexist.txt')
+    const targetPath = join(dirName, 'non-exist', 'tempFileCopy.txt')
+
+    expect(async () => await manager.copy(sourcePath, targetPath)).rejects.toThrowError()
+  })
   it('target file path have already exists a file', async () => {
     const sourcePath = join(dirName, 'tempSameFile')
     const targetPath = join(dirName, 'tempSameFileCopy')
@@ -86,6 +92,12 @@ describe('test copy dir', () => {
     expect(await manager.exists(join(targetPath, 'temp'))).toBe('dir')
     expect(await manager.exists(join(targetPath, 'temp.txt'))).toBe('file')
     expect(await manager.read(join(targetPath, 'temp.txt'), 'text')).toBe('Hello, world!')
+  })
+  it('source file not exist', async () => {
+    const sourcePath = join(dirName1, 'tempFilenon-noexist')
+    const targetPath = join(dirName1, 'non-exist', 'tempFileCopy')
+
+    expect(async () => await manager.copy(sourcePath, targetPath)).rejects.toThrowError()
   })
   it('target dir path have already exists a dir', async () => {
     const dirPath1 = join(dirName1, 'tempSameDir')

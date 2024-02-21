@@ -27,6 +27,18 @@ describe('test move file', () => {
     expect(await manager.exists(deepFilePath)).toBe('file')
     expect(await manager.read(deepFilePath, 'text')).toBe('Hello, world!')
   })
+  it('rename', async () => {
+    const filePath1 = join(dirName1, 'tempFile.txt')
+    await manager.write(filePath1, 'Hello, world!')
+    await manager.move(filePath1, 'asd', { renameMode: true })
+    expect(await manager.exists(filePath1)).toBeFalsy()
+    expect(await manager.exists(join(dirName1, 'asd.txt'))).toBe('file')
+    expect(await manager.read(join(dirName1, 'asd.txt'), 'text')).toBe('Hello, world!')
+
+    // not exists
+    const filePath2 = join(dirName1, 'tempFile2.txt')
+    expect(async () => await manager.move(filePath2, 'asd', { renameMode: true })).rejects.toThrowError()
+  })
   it('target file path have already exists a file', async () => {
     const filePath1 = join(dirName1, 'tempSameFile')
     const filePath2 = join(dirName2, 'tempSameFile')
@@ -85,6 +97,19 @@ describe('test move dir', () => {
 
     expect(await manager.exists(dirPath1)).toBeFalsy()
     expect(await manager.exists(deepDirPath)).toBe('dir')
+  })
+  it('rename', async () => {
+    const dirPath1 = join(dirName1, 'tempDir')
+
+    await manager.ensureDir(dirPath1)
+    await manager.move(dirPath1, 'asd', { renameMode: true })
+
+    expect(await manager.exists(dirPath1)).toBeFalsy()
+    expect(await manager.exists(join(dirName1, 'asd'))).toBe('dir')
+
+    // not exists
+    const dirPath2 = join(dirName1, 'tempDir2')
+    expect(async () => await manager.move(dirPath2, 'asd', { renameMode: true })).rejects.toThrowError()
   })
   it('target dir path have already exists a dir', async () => {
     const dirPath1 = join(dirName1, 'tempSameDir')

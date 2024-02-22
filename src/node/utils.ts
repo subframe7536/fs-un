@@ -6,7 +6,12 @@ import type { CopyOptions, FileAttr, FindOptions, MoveOptions, PathType } from '
 import { type ReaddirFn, walk } from '../utils/walk'
 
 export const nodeReaddirFn: ReaddirFn = path => readdir(path, { withFileTypes: true })
-  .then(dirent => dirent.map(dirent => ({ isDir: dirent.isDirectory(), name: dirent.name })))
+  .then(dirent => dirent.map(
+    dirent => ({
+      isDir: dirent.isDirectory(),
+      name: dirent.name,
+    } satisfies Awaited<ReturnType<ReaddirFn>>[0]),
+  ))
 
 /**
  * create a directory, auto skip if exists

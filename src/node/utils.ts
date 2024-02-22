@@ -2,11 +2,10 @@ import type { Dirent } from 'node:fs'
 import { existsSync, promises as fsp } from 'node:fs'
 import { readdir } from 'node:fs/promises'
 import { basename, dirname, extname, join, parse, relative, resolve } from 'pathe'
-import type { Promisable } from '@subframe7536/type-utils'
-import type { CopyOptions, FileAttr, FindOptions, MoveOptions, PathType, WalkQueueItem } from '../types'
-import { type Options, type ReaddirFn, walk } from '../utils/walk'
+import type { CopyOptions, FileAttr, FindOptions, MoveOptions, PathType } from '../types'
+import { type ReaddirFn, walk } from '../utils/walk'
 
-const readdirFn: ReaddirFn = path => readdir(path, { withFileTypes: true })
+export const nodeReaddirFn: ReaddirFn = path => readdir(path, { withFileTypes: true })
   .then(dirent => dirent.map(dirent => ({ isDir: dirent.isDirectory(), name: dirent.name })))
 
 /**
@@ -49,7 +48,7 @@ export async function copy(
   to: string,
   options: CopyOptions = {},
 ): Promise<void> {
-  const { match, overwrite } = options
+  const { filter, overwrite } = options
   const status = await exists(to)
   if (status) {
     if (overwrite) {
@@ -67,13 +66,16 @@ export async function copy(
         from.endsWith('asar') && process?.versions?.electron
           // eslint-disable-next-line ts/no-var-requires, ts/no-require-imports, unicorn/prefer-node-protocol
           ? require('original-fs').copyFileSync(from, to)
-          : await walk(from, readdirFn, {
+          : await walk(from, nodeReaddirFn, {
             includeDirs: true,
             transform: async (srcPath, isDir) => {
               const destPath = resolve(to, relative(from, srcPath))
+              if (filter?.(srcPath, !isDir)) {
+                return
+              }
               if (isDir) {
                 await mkdir(destPath)
-              } else if (!match || match(srcPath, !isDir)) {
+              } else {
                 await mkdir(dirname(destPath))
                 await fsp.copyFile(srcPath, destPath)
               }
@@ -130,7 +132,7 @@ export async function exists(path: string | Dirent, link: boolean = true) {
 export async function find(path: string, options: FindOptions): Promise<string[]> {
   return walk(
     path,
-    readdirFn,
+    nodeReaddirFn,
     {
       includeDirs: true,
       transform: async (str, isDir) => options.match(str, !isDir) ? str : undefined,
@@ -148,7 +150,7 @@ export async function parseDir(
 ): Promise<FileAttr[]> {
   return await walk(
     path,
-    readdirFn,
+    nodeReaddirFn,
     {
       transform: async (p, isDir) => {
         if (isDir) {

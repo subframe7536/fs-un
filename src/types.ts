@@ -1,10 +1,15 @@
 import type { Prettify, Promisable } from '@subframe7536/type-utils'
 
+export type Serializer = {
+  read: (parameter: string) => any
+  write: (parameter: any) => string
+}
+
 export type FilterFn = (path: string, attr: FileAttr) => (FileAttr | undefined)
 
 export type BaseFileAttr = {
   /**
-   * relative dir path of root, start without `./`
+   * relative dir path of root, start without `.`
    */
   dir: string
   /**
@@ -52,74 +57,98 @@ export type MoveOptions = {
   renameMode?: boolean
 }
 
-export type CopyOptions = {
-  /**
-   * whether overwrite target path
-   */
-  overwrite?: boolean
-  /**
-   * filter files when copy directory
-   */
-  match?: (path: string, isFile: boolean) => Promisable<boolean>
-}
+export type CopyOptions = OverwriteOptions
 
 export type PathType = 'file' | 'dir' | 'other' | false
 
-// todo: https://docs.obsidian.md/Reference/TypeScript+API/FileSystemAdapter#Methods
-export interface DirectoryManager<BufferType> {
-  /**
-   * find files
-   */
-  find: (path: string, options: FindOptions) => Promise<string[]>
+export type OverwriteOptions = { overwrite?: boolean }
 
-  /**
-   * read file data
-   */
-  read: {
-    (path: string, type: 'buffer'): Promise<BufferType | undefined>
-    (path: string, type: 'text'): Promise<string | undefined>
-    <K = any>(path: string, type: 'json', parse?: (str: string) => any): Promise<K | undefined>
-  }
+export type ListState = {
+  name: string
+  isFile: boolean
+  isDirectory: boolean
+  isSymlink: boolean
+}
 
-  /**
-   * write data to file
-   */
-  write: (path: string, data: string | BufferType | object, writeFn?: (data: any) => string) => Promise<void>
-
-  /**
-   * parse files attributes in directory
-   */
-  parseDir: (path: string, cb?: (path: string, attr: FileAttr) => (FileAttr | undefined)) => Promise<FileAttr[]>
-
-  /**
-   * parse file attributes
-   */
-  parseFileAttr: (path: string) => Promise<FileAttr>
-
+export interface ReadonlyDirectoryManager {
   /**
    * check file or directory
    */
   exists: (path: string) => Promise<PathType>
 
   /**
-   * make sure directory exist, auto create parent directory
+   * get file attributes
+   */
+  fileAttr: (path: string) => Promise<FileAttr | undefined>
+
+  /**
+   * list directory
+   */
+  list: (path: string) => AsyncIterable<ListState>
+
+  /**
+   * read file data as Buffer or Uint8Array
+   */
+  readBytes: (path: string) => Promise<Uint8Array | undefined>
+  /**
+   * read file data as string
+   */
+  readText: (path: string) => Promise<string | undefined>
+}
+
+export interface DirectoryManager extends ReadonlyDirectoryManager {
+  /**
+   * ensure directory exist, auto create parent directory
    *
    * return ensured path. if is `undefined`, `path` is a exist file
    */
-  ensureDir: (path: string) => Promise<string | undefined>
+  mkdir: (path: string) => Promise<string | undefined>
 
   /**
-   * move file or directory, throw when overwrite by default
+   * write data to file
+   */
+  writeFile: (path: string, data: string | ArrayBuffer | ArrayBufferView, parseObject?: (data: any) => string) => Promise<void>
+
+  /**
+   * move or rename file or dir, in default, throw error when overwrite
    */
   move: (from: string, to: string, options?: MoveOptions) => Promise<void>
 
   /**
-   * copy file or directory, throw when overwrite by default
+   * copy file or dir, in default, throw error when overwrite
    */
-  copy: (from: string, to: string, options?: CopyOptions) => Promise<void>
+  copy: (from: string, to: string, options?: OverwriteOptions) => Promise<void>
 
   /**
    * remove directory and file recursively
    */
   remove: (path: string) => Promise<void>
+}
+
+export type WalkOptions<T, N> = {
+  /**
+   * whether to include directories
+   */
+  includeDirs?: boolean
+  /**
+   * max directory depth
+   */
+  maxDepth?: number
+  /**
+   * filter files or directories, executed before `transform`
+   */
+  filter?: (path: string, isDirectory: boolean) => boolean
+  /**
+   * abort controller
+   */
+  signal?: AbortSignal
+  /**
+   * transform result, `state` is undefined if `isDirectory` is `true`
+   */
+  transform?: (path: string, isDirectory: boolean) => Promisable<T>
+  /**
+   * whether to filter `null` and `undefined` result from `transform`
+   * @default true
+   */
+  notNullish?: N
 }

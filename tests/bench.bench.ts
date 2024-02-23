@@ -1,13 +1,11 @@
 /* eslint-disable test/consistent-test-it */
-import { readdir } from 'node:fs/promises'
 import { bench } from 'vitest'
 import { fdir } from 'fdir'
-import { walk } from '../src/utils/walk'
+import { walk } from '../src/node'
 
 const path = 'node_modules'
 bench('fs-un', async () => {
-  await walk(path, path => readdir(path, { withFileTypes: true })
-    .then(dirent => dirent.map(dirent => ({ isDir: dirent.isDirectory(), name: dirent.name }))), { maxDepth: 1000 })
+  await walk(path, { maxDepth: 1000 })
 })
 
 bench('fdir', async () => {

@@ -1,4 +1,4 @@
-import { useApp } from 'solid-dollar/hooks'
+import { createApp } from '@solid-hooks/core'
 import App from './App'
 
-useApp(App).mount('#app')
+createApp(App).mount('#app')

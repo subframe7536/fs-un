@@ -2,6 +2,7 @@
 
 unified util to manage files and directories inside a directory on different platforms
 
+**Unsupport for link**
 ### support platform
 
 - Nodejs `fs` module
@@ -10,4 +11,5 @@ unified util to manage files and directories inside a directory on different pla
 ### todo
 
 - [ ] tree structure?
-- [ ] https://github.com/humanwhocodes/fsx
+- [ ] https://github.com/humanwhocodes/humanfs/blob/main/packages/web/src/web-hfs.js
+- [ ] https://github.com/microsoft/vscode/blob/main/src/vs/platform/files/browser/htmlFileSystemProvider.ts

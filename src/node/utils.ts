@@ -1,17 +1,7 @@
-import type { Dirent } from 'node:fs'
 import { existsSync, promises as fsp } from 'node:fs'
-import { readdir } from 'node:fs/promises'
-import { basename, dirname, extname, join, parse, relative, resolve } from 'pathe'
-import type { CopyOptions, FileAttr, FindOptions, MoveOptions, PathType } from '../types'
-import { type ReaddirFn, walk } from '../utils/walk'
-
-export const nodeReaddirFn: ReaddirFn = path => readdir(path, { withFileTypes: true })
-  .then(dirent => dirent.map(
-    dirent => ({
-      isDir: dirent.isDirectory(),
-      name: dirent.name,
-    } satisfies Awaited<ReturnType<ReaddirFn>>[0]),
-  ))
+import { basename, dirname, extname, join, relative, resolve } from 'pathe'
+import type { MoveOptions, OverwriteOptions, PathType } from '../types'
+import { walk } from './walk'
 
 /**
  * create a directory, auto skip if exists
@@ -51,9 +41,9 @@ async function copyLink(from: string, to: string) {
 export async function copy(
   from: string,
   to: string,
-  options: CopyOptions = {},
+  options: OverwriteOptions = {},
 ): Promise<void> {
-  const { filter, overwrite } = options
+  const { overwrite } = options
   const status = await exists(to)
   if (status) {
     if (overwrite) {
@@ -71,13 +61,10 @@ export async function copy(
         from.endsWith('asar') && process?.versions?.electron
           // eslint-disable-next-line ts/no-var-requires, ts/no-require-imports, unicorn/prefer-node-protocol
           ? require('original-fs').copyFileSync(from, to)
-          : await walk(from, nodeReaddirFn, {
+          : await walk(from, {
             includeDirs: true,
             transform: async (srcPath, isDir) => {
               const destPath = resolve(to, relative(from, srcPath))
-              if (filter?.(srcPath, !isDir)) {
-                return
-              }
               if (isDir) {
                 await mkdir(destPath)
               } else {
@@ -108,17 +95,14 @@ export async function copy(
 /**
  * check if path exists, if second param is true, will check 'link'
  */
-export async function exists(path: Dirent): Promise<PathType>
-export async function exists(path: string, link: false): Promise<PathType>
-export async function exists(path: string): Promise<PathType | 'link'>
-export async function exists(path: string | Dirent, link: boolean = true) {
+export async function exists(path: string): Promise<PathType | 'link'> {
   try {
-    const stat = typeof path === 'string' ? await fsp.lstat(path) : path
+    const stat = await fsp.lstat(path)
     if (stat.isDirectory()) {
       return 'dir'
     } else if (stat.isFile()) {
       return 'file'
-    } else if (link && stat.isSymbolicLink()) {
+    } else if (stat.isSymbolicLink()) {
       return 'link'
     } else {
       return 'other'
@@ -128,98 +112,6 @@ export async function exists(path: string | Dirent, link: boolean = true) {
       return false
     }
     throw err
-  }
-}
-
-/**
- * recursively search files
- */
-export async function find(path: string, options: FindOptions): Promise<string[]> {
-  return walk(
-    path,
-    nodeReaddirFn,
-    {
-      includeDirs: true,
-      transform: async (str, isDir) => options.match(str, !isDir) ? str : undefined,
-      ...options.recursive ? undefined : { maxDepth: 1 },
-    },
-  )
-}
-
-/**
- * list directory and parse attributes
- */
-export async function parseDir(
-  path: string,
-  cb?: (path: string, attr: FileAttr) => (FileAttr | undefined),
-): Promise<FileAttr[]> {
-  return await walk(
-    path,
-    nodeReaddirFn,
-    {
-      transform: async (p, isDir) => {
-        if (isDir) {
-          return undefined
-        }
-        const attr = await parseFileAttr(p, path)
-        return cb?.(path, attr) || attr
-      },
-    },
-  )
-}
-
-/**
- * parse file attributes
- */
-export async function parseFileAttr(path: string, rootPath?: string): Promise<FileAttr> {
-  const { size, mtime: modifiedTime } = await fsp.stat(path)
-  const { dir, name, ext } = parse(rootPath ? relative(rootPath, path) : path)
-  return { dir, name, ext, size, modifiedTime }
-}
-
-/**
- * read file as buffer or text or json or custom
- */
-export async function read(path: string, type: 'buffer'): Promise<Buffer | undefined>
-export async function read(path: string, type: 'text'): Promise<string | undefined>
-export async function read<T = any>(path: string, type: 'json', parse?: (str: string) => any): Promise<T | undefined>
-export async function read(path: string, type: 'buffer' | 'text' | 'json', parse: (str: string) => any = JSON.parse) {
-  try {
-    switch (type) {
-      case 'buffer':
-        return await fsp.readFile(path)
-      case 'text':
-        return await fsp.readFile(path, 'utf-8')
-      case 'json':
-        return parse(await fsp.readFile(path, 'utf-8'))
-    }
-  } catch (error) {
-    if (isNotExistError(error) || isDirError(error)) {
-      return undefined
-    }
-    throw error
-  }
-}
-
-/**
- * write file, auto create parent directory
- */
-export async function write(
-  path: string,
-  data: Parameters<typeof fsp.writeFile>[1],
-  options?: Parameters<typeof fsp.writeFile>[2],
-): Promise<void> {
-  try {
-    await fsp.writeFile(path, data, options)
-  } catch (err) {
-    if (isNotExistError(err)) {
-      await fsp.mkdir(dirname(path), { recursive: true })
-      await fsp.writeFile(path, data, options)
-    } else if (isDirError(err)) {
-      throw new Error(`"${path}" exists a directory, cannot write`)
-    } else {
-      throw err
-    }
   }
 }
 

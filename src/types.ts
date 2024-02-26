@@ -102,12 +102,12 @@ export interface DirectoryManager extends ReadonlyDirectoryManager {
    *
    * return ensured path. if is `undefined`, `path` is a exist file
    */
-  mkdir: (path: string) => Promise<string | undefined>
+  mkdir: (path: string) => Promise<void>
 
   /**
    * write data to file
    */
-  writeFile: (path: string, data: string | ArrayBuffer | ArrayBufferView, parseObject?: (data: any) => string) => Promise<void>
+  writeFile: (path: string, data: string | ArrayBuffer | ArrayBufferView, options?: OverwriteOptions) => Promise<void>
 
   /**
    * move or rename file or dir, in default, throw error when overwrite
@@ -130,6 +130,10 @@ export type WalkOptions<T, N> = {
    * whether to include directories
    */
   includeDirs?: boolean
+  /**
+   * whether to append root dir path when transform
+   */
+  appendRoot?: boolean
   /**
    * max directory depth
    */

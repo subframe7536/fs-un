@@ -1,5 +1,5 @@
 import { readdir } from 'node:fs'
-import { join } from 'pathe'
+import { join, relative } from 'pathe'
 import type { WalkOptions } from '../types'
 
 /**
@@ -17,6 +17,7 @@ export async function walk<
 ): Promise<Result[]> {
   const {
     maxDepth = Number.POSITIVE_INFINITY,
+    appendRoot,
     filter,
     includeDirs = false,
     signal,
@@ -26,21 +27,26 @@ export async function walk<
 
   const result: Result[] = []
 
-  const _transform = async (path: string, isDir: boolean) => {
-    const _ = await transform(path, isDir)
+  const _transform = appendRoot
+    ? (path: string, isDir: boolean) => transform(path, isDir)
+    : (path: string, isDir: boolean) => transform(path.substring(root.length), isDir)
+
+  const pushDirectory = includeDirs
+    ? filter
+      ? async (dirPath: string) => filter(dirPath, true) && await handleResult(dirPath, true)
+      : async (dirPath: string) => await handleResult(dirPath, true)
+    : null
+
+  const pushFile = filter
+    ? async (filePath: string) => filter(filePath, false) && await handleResult(filePath, false)
+    : async (filePath: string) => await handleResult(filePath, false)
+
+  async function handleResult(path: string, isDir: boolean) {
+    const _ = await _transform(path, isDir)
     if (!notNullish || (_ !== null && _ !== undefined)) {
       result.push(_ as Result)
     }
   }
-  const pushDirectory = includeDirs
-    ? filter
-      ? async (dirPath: string) => filter(dirPath, true) && await _transform(dirPath, true)
-      : async (dirPath: string) => await _transform(dirPath, true)
-    : null
-
-  const pushFile = filter
-    ? async (filePath: string) => filter(filePath, false) && await _transform(filePath, false)
-    : async (filePath: string) => await _transform(filePath, false)
 
   return new Promise((resolve, reject) => {
     let taskCount = 0

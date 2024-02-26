@@ -8,13 +8,12 @@ import { walk } from './walk'
  *
  * return ensured path. if is `undefined`, `path` is a exist file
  */
-export async function mkdir(path: string): Promise<string | undefined> {
+export async function mkdir(path: string): Promise<void> {
   try {
     await fsp.mkdir(path, { recursive: true })
-    return path
   } catch (err) {
     if (isAlreadyExistError(err)) {
-      return await exists(path) !== 'dir' ? undefined : path
+      return
     }
     throw err
   }
@@ -63,6 +62,7 @@ export async function copy(
           ? require('original-fs').copyFileSync(from, to)
           : await walk(from, {
             includeDirs: true,
+            appendRoot: true,
             transform: async (srcPath, isDir) => {
               const destPath = resolve(to, relative(from, srcPath))
               if (isDir) {

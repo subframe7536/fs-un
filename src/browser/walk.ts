@@ -16,12 +16,13 @@ export async function walk<
     maxDepth = Number.POSITIVE_INFINITY,
     filter,
     includeDirs = false,
+    appendRoot,
     signal,
     notNullish = true,
     transform = (p: string) => p,
   } = options
 
-  const queue: [FileSystemFileHandle | FileSystemDirectoryHandle, string, number][] = [[root, root.name, maxDepth]]
+  const queue: [FileSystemFileHandle | FileSystemDirectoryHandle, string, number][] = []
   const result: Result[] = []
 
   const _transform = async (path: string, handle: FileSystemHandle) => {
@@ -45,7 +46,7 @@ export async function walk<
     path: string,
     depth: number,
   ) {
-    if (signal?.aborted) {
+    if (signal?.aborted || depth < 0) {
       return
     }
     const _path = `${path}/${handle.name}`
@@ -53,18 +54,18 @@ export async function walk<
       await pushDirectory?.(_path, handle)
       const entries = handle.entries()
       for await (const [name, handle] of entries) {
-        if (!filter?.(name, isDirectoryHandle(handle))) {
-          continue
+        if (!filter || filter(name, isDirectoryHandle(handle))) {
+          queue.push([handle, _path, depth - 1])
         }
-        queue.push([handle, _path, depth - 1])
       }
     } else if (isFileHandle(handle)) {
       await pushFile?.(_path, handle)
     }
   }
 
+  const basePath = appendRoot ? root.name : ''
   for await (const [, handle] of root.entries()) {
-    queue.push([handle, root.name, maxDepth - 1])
+    queue.push([handle, basePath, maxDepth - 1])
   }
   while (queue.length) {
     const batch = queue.splice(0, 8)

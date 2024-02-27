@@ -62,7 +62,7 @@ export async function copy(
           ? require('original-fs').copyFileSync(from, to)
           : await walk(from, {
             includeDirs: true,
-            appendRoot: true,
+            withRootPath: true,
             transform: async (srcPath, isDir) => {
               const destPath = resolve(to, relative(from, srcPath))
               if (isDir) {
@@ -84,11 +84,11 @@ export async function copy(
         throw new Error(`"${from}" not exists`)
     }
   } catch (err) {
-    if (!isNotExistError(err)) {
-      throw err
+    if (isNotExistError(err)) {
+      await mkdir(dirname(to))
+      await copy(from, to, options)
     }
-    await mkdir(dirname(to))
-    await copy(from, to, options)
+    throw err
   }
 }
 
@@ -140,11 +140,11 @@ export async function move(
   try {
     await fsp.rename(from, to)
   } catch (err) {
-    if ((isDirError(err) || isNoPermissionError(err)) && overwrite) {
+    if (isDirError(err)) {
       await remove(to)
       await fsp.rename(from, to)
     } else if (isAnotherDeviceError(err)) {
-      await copy(from, to, { overwrite: true })
+      await copy(from, to, { overwrite })
       await remove(from)
     } else if (isNotExistError(err) && !toExists) {
       await mkdir(dirname(to))
@@ -181,13 +181,6 @@ export function isAnotherDeviceError(err: unknown) {
  */
 export function isDirError(err: unknown) {
   return (err as any)?.code === 'EISDIR'
-}
-
-/**
- * error code is `EPERM`
- */
-export function isNoPermissionError(err: unknown) {
-  return (err as any)?.code === 'EPERM'
 }
 
 /**

@@ -17,7 +17,7 @@ export async function walk<
 ): Promise<Result[]> {
   const {
     maxDepth = Number.POSITIVE_INFINITY,
-    appendRoot,
+    withRootPath,
     filter,
     includeDirs = false,
     signal,
@@ -27,7 +27,7 @@ export async function walk<
 
   const result: Result[] = []
 
-  const _transform = appendRoot
+  const _transform = withRootPath
     ? (path: string, isDir: boolean) => transform(path, isDir)
     : (path: string, isDir: boolean) => transform(path.substring(root.length), isDir)
 

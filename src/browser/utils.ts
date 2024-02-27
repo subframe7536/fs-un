@@ -1,5 +1,4 @@
-import { normalize } from 'pathe'
-import type { WalkOptions } from '..'
+import { basename, dirname, normalize } from 'pathe'
 
 export function isSupportFs() {
   return typeof globalThis.showDirectoryPicker === 'function'
@@ -24,15 +23,45 @@ export function isDirectoryHandle(handle: FileSystemHandle): handle is FileSyste
   return handle.kind === 'directory'
 }
 
-export async function mkdir(root: FileSystemDirectoryHandle, path: string): Promise<FileSystemDirectoryHandle | undefined> {
+export async function getParentDir(root: FileSystemDirectoryHandle, path: string, create: boolean): Promise<FileSystemDirectoryHandle | undefined> {
   try {
     let handle = root
-    const pathItems = normalize(path).split('/').filter(Boolean)
+    const pathItems = dirname(path).split('/').filter(Boolean)
     for (const name of pathItems) {
-      handle = await handle.getDirectoryHandle(name, { create: true })
+      handle = await handle.getDirectoryHandle(name, { create })
     }
     return handle
-  } catch (ignore) {
+  } catch {
+    return undefined
+  }
+}
+
+export async function getHandleFromPath(
+  root: FileSystemDirectoryHandle,
+  path: string,
+  ensureParentDir: boolean = false,
+): Promise<FileSystemHandle | undefined> {
+  const parentHandle = await getParentDir(root, dirname(path), ensureParentDir)
+  if (!parentHandle) {
+    return undefined
+  }
+  const name = basename(path)
+  try {
+    return await parentHandle.getFileHandle(name)
+  } catch {
+    try {
+      return await parentHandle.getDirectoryHandle(name)
+    } catch {
+      return undefined
+    }
+  }
+}
+
+export async function mkdir(root: FileSystemDirectoryHandle, path: string): Promise<FileSystemDirectoryHandle | undefined> {
+  try {
+    const handle = await getParentDir(root, path, true)
+    return handle ? await handle.getDirectoryHandle(basename(path), { create: true }) : undefined
+  } catch {
     return undefined
   }
 }
@@ -74,21 +103,23 @@ export async function copyFile(
   await writable.close()
 }
 
-export async function renameFileOrMoveToDir(
+export async function useBuiltinMove(
   from: FileSystemFileHandle,
   targetFileName: string
-): Promise<void>
-export async function renameFileOrMoveToDir(
+): Promise<boolean>
+export async function useBuiltinMove(
   from: FileSystemFileHandle,
   targetDirHandle: FileSystemDirectoryHandle
-): Promise<void>
-export async function renameFileOrMoveToDir(
+): Promise<boolean>
+export async function useBuiltinMove(
   from: FileSystemFileHandle,
   targetDirHandle: FileSystemDirectoryHandle,
   targetFileName: string
-): Promise<void>
-export async function renameFileOrMoveToDir(from: FileSystemFileHandle, ...args: any) {
+): Promise<boolean>
+export async function useBuiltinMove(from: FileSystemFileHandle, ...args: any) {
   if ('move' in from) {
     await (from.move as any)(...args)
+    return true
   }
+  return false
 }

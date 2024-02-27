@@ -68,11 +68,11 @@ export class NodeDirectoryManager implements DirectoryManager {
     }
   }
 
-  public async mkdir(path: string): Promise<string | undefined> {
-    return await _.mkdir(this.parsePath(path))
+  public async mkdir(path: string): Promise<void> {
+    await _.mkdir(this.parsePath(path))
   }
 
-  public async writeFile(path: string, data: string | ArrayBuffer | ArrayBufferView): Promise<void> {
+  public async writeFile(path: string, data: string | ArrayBuffer | ArrayBufferView, options: OverwriteOptions = {}): Promise<void> {
     if (data instanceof ArrayBuffer) {
       data = Buffer.from(
         ArrayBuffer.isView(data)
@@ -80,6 +80,11 @@ export class NodeDirectoryManager implements DirectoryManager {
           : data,
       )
     }
+
+    if (!options.overwrite && await _.exists(path)) {
+      throw new Error(`"${path}" already exists`)
+    }
+
     try {
       await fsp.writeFile(this.parsePath(path), data as string | Buffer)
     } catch (err) {

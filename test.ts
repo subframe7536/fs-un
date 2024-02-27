@@ -1,4 +1,4 @@
-import { walkDir } from './src'
+import { walk } from './src'
 
 const path = 'src'
-walkDir(path, { includeDirs: true }).then(l => console.log(l))
+walk(path, { includeDirs: true }).then(l => console.log(l))

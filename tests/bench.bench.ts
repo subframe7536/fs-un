@@ -5,7 +5,7 @@ import { walk } from '../src/node'
 
 const path = 'node_modules'
 bench('fs-un', async () => {
-  await walk(path, { maxDepth: 1000 })
+  await walk(path, { maxDepth: 1000, withRootPath: true })
 })
 
 bench('fdir', async () => {

@@ -131,9 +131,9 @@ export type WalkOptions<T, N> = {
    */
   includeDirs?: boolean
   /**
-   * whether to append root dir path when transform
+   * whether to prepend root dir path when transform
    */
-  appendRoot?: boolean
+  withRootPath?: boolean
   /**
    * max directory depth
    */

@@ -25,7 +25,7 @@ export default function App() {
   async function handleClick() {
     const handle = await window.showDirectoryPicker()
     console.log(
-      await walk(handle),
+      await walk(handle, { includeDirs: true, maxDepth: 3, withRootPath: true }),
     )
   }
   return (

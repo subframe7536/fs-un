@@ -1,34 +1,36 @@
-import { basename, dirname, extname, normalize } from 'pathe'
-import type { DirectoryManager, FileAttr, ListState, OverwriteOptions, PathType } from '../types'
+import { basename, dirname, extname, join, normalize } from 'pathe'
+import type { AnyFunction } from '@subframe7536/type-utils'
+import type { DirectoryManager, FileAttr, ListState, MoveOptions, OverwriteOptions, PathType } from '../types'
 import * as _ from './utils'
+import { walk } from './walk'
 
 export class BrowserDirectoryManager implements DirectoryManager {
   public constructor(
     private root: FileSystemDirectoryHandle,
   ) { }
 
-  // todo))
-  private async getHandle(path: string): Promise<FileSystemHandle | undefined> {
-    const pathItems = normalize(path).split('/').filter(Boolean)
-    return undefined
+  private createError(path: string, msg: string, method: string) {
+    return new Error(`Error in ${method}: ${msg}, ${normalize(path)}`)
   }
 
   private async getFileHandle(path: string): Promise<FileSystemFileHandle | undefined> {
-    const handle = await this.getHandle(path)
+    const handle = await _.getHandleFromPath(this.root, path)
     return (handle && _.isFileHandle(handle)) ? handle : undefined
   }
 
-  private async getDirectoryHandle(path: string): Promise<FileSystemDirectoryHandle | undefined> {
-    const handle = await this.getHandle(path)
-    return (handle && _.isDirectoryHandle(handle)) ? handle : undefined
+  private async getDirectoryHandle(path: string, ensureDir?: false): Promise<FileSystemDirectoryHandle | undefined>
+  private async getDirectoryHandle(path: string, ensureDir: true): Promise<FileSystemDirectoryHandle>
+  private async getDirectoryHandle(path: string, ensureDir = false): Promise<FileSystemDirectoryHandle | undefined> {
+    const handle = await _.getHandleFromPath(this.root, path)
+    return (handle && _.isDirectoryHandle(handle)) ? handle : ensureDir ? await _.mkdir(this.root, path) : undefined
   }
 
   private async getParentHandle(path: string): Promise<FileSystemDirectoryHandle | undefined> {
     return await this.getDirectoryHandle(dirname(path))
   }
 
-  public async exists(path: string): Promise<PathType> {
-    const handle = await this.getHandle(path)
+  public async exists(path: string | FileSystemHandle): Promise<PathType> {
+    const handle = typeof path === 'string' ? await _.getHandleFromPath(this.root, path) : path
     if (!handle) {
       return false
     }
@@ -95,18 +97,23 @@ export class BrowserDirectoryManager implements DirectoryManager {
     return handle ? await (await handle.getFile()).text() : undefined
   }
 
-  public async mkdir(path: string): Promise<string | undefined> {
-    return (await _.mkdir(this.root, path))?.name
+  public async mkdir(path: string): Promise<void> {
+    await _.mkdir(this.root, path)
   }
 
-  public async writeFile(path: string, data: string | ArrayBuffer | ArrayBufferView): Promise<void> {
-    let handle = await this.getFileHandle(path)
-    if (!handle) {
-      const parent = await _.mkdir(this.root, dirname(path))
+  public async writeFile(path: string | FileSystemFileHandle, data: string | ArrayBuffer | ArrayBufferView, options: OverwriteOptions = {}): Promise<void> {
+    let handle = typeof path === 'string' ? await this.getFileHandle(path) : path
+    if (handle && !options.overwrite) {
+      throw new Error(`"${path}" already exists`)
+    } else if (!handle) {
+      const parent = await _.mkdir(this.root, dirname(path as string))
       if (!parent) {
-        return
+        throw new Error(`cannot create directory for "${path}"`)
       }
-      handle = await parent.getFileHandle(basename(path), { create: true })
+      handle = await parent.getFileHandle(basename(path as string), { create: true })
+      if (!handle) {
+        throw new Error(`cannot create file "${path}"`)
+      }
     }
     const writable = await handle.createWritable()
     await writable.write(data)
@@ -114,9 +121,76 @@ export class BrowserDirectoryManager implements DirectoryManager {
   }
 
   public async move(from: string, to: string, options: MoveOptions = {}): Promise<void> {
+    const fromHandle = await _.getHandleFromPath(this.root, from)
+    if (!fromHandle) {
+      return
+    }
+
+    if (options.renameMode) {
+      to = join(dirname(from), to)
+    }
+
+    if (from === to) {
+      return
+    }
+
+    if (_.isFileHandle(fromHandle)) {
+      const toParent = await this.getDirectoryHandle(dirname(to), true)
+      const toHandle = await toParent.getFileHandle(basename(to), { create: true })
+      await this.writeFile(toHandle, await (await fromHandle.getFile()).arrayBuffer(), options)
+      'remove' in fromHandle
+        ? await (fromHandle.remove as AnyFunction<Promise<void>>)()
+        : await this.remove(from)
+    } else if (_.isDirectoryHandle(fromHandle)) {
+      await walk<void>(fromHandle, {
+        includeDirs: true,
+        withRootPath: true,
+        transform: async (p, handle) => {
+          const toParent = await this.getDirectoryHandle(dirname(p), true)
+          if (_.isFileHandle(handle)) {
+            const toHandle = await toParent.getFileHandle(basename(p), { create: true })
+            await this.writeFile(toHandle, await (await handle.getFile()).arrayBuffer(), options)
+          } else if (_.isDirectoryHandle(handle)) {
+            await toParent.getDirectoryHandle(handle.name, { create: true })
+          }
+        },
+      })
+      'remove' in fromHandle
+        ? await (fromHandle.remove as AnyFunction<Promise<void>>)()
+        : await this.remove(from)
+    }
   }
 
-  public async copy(from: string, to: string, options?: OverwriteOptions): Promise<void> {
+  public async copy(from: string, to: string, options: OverwriteOptions = {}): Promise<void> {
+    const fromHandle = await _.getHandleFromPath(this.root, from)
+    if (!fromHandle) {
+      return
+    }
+    const toParent = await _.getParentDir(this.root, to, true)
+    if (!toParent) {
+      throw new Error(`cannot create directory for "${to}"`)
+    }
+    const toName = basename(to)
+    if (_.isFileHandle(fromHandle)) {
+      const toHandle = await toParent.getFileHandle(toName)
+      if (!options.overwrite && toHandle) {
+        throw new Error(`"${to}" already exists`)
+      }
+      await _.copyFile(fromHandle, toHandle || await toParent.getFileHandle(toName, { create: true }))
+    } else if (_.isDirectoryHandle(fromHandle)) {
+      await walk<void>(fromHandle, {
+        includeDirs: true,
+        withRootPath: true,
+        transform: async (p, handle) => {
+          if (_.isFileHandle(handle)) {
+            const toHandle = await toParent.getFileHandle(basename(p), { create: true })
+            await _.copyFile(handle, toHandle)
+          } else if (_.isDirectoryHandle(handle)) {
+            await toParent.getDirectoryHandle(handle.name, { create: true })
+          }
+        },
+      })
+    }
   }
 
   public async remove(path: string): Promise<void> {

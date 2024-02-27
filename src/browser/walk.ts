@@ -1,8 +1,9 @@
+import type { Promisable } from '@subframe7536/type-utils'
 import type { WalkOptions } from '..'
 import { isDirectoryHandle, isFileHandle } from './utils'
 
 type BrowserWalkOptions<T, NotNullish> = Omit<WalkOptions<T, NotNullish>, 'transform'> & {
-  transform?: (p: string, handle: FileSystemHandle) => Promise<T>
+  transform?: (p: string, handle: FileSystemHandle) => Promisable<T>
 }
 export async function walk<
   T = string,
@@ -16,7 +17,7 @@ export async function walk<
     maxDepth = Number.POSITIVE_INFINITY,
     filter,
     includeDirs = false,
-    appendRoot,
+    withRootPath,
     signal,
     notNullish = true,
     transform = (p: string) => p,
@@ -63,7 +64,7 @@ export async function walk<
     }
   }
 
-  const basePath = appendRoot ? root.name : ''
+  const basePath = withRootPath ? root.name : ''
   for await (const [, handle] of root.entries()) {
     queue.push([handle, basePath, maxDepth - 1])
   }

@@ -22,14 +22,14 @@ describe('test ensureDir', () => {
   it('target path exists dir', async () => {
     const path = join(dirName, 'test')
     await fs.mkdir(join(basePath, path))
-    expect(await manager.mkdir(path)).toBe(resolve(basePath, path))
+    await manager.mkdir(path)
     expect(await manager.exists(path)).toBe('dir')
   })
 
   it('target path exists file', async () => {
     const path = join(dirName, 'test')
     await manager.writeFile(path, 'test')
-    expect(await manager.mkdir(path)).toBeUndefined()
+    await manager.mkdir(path)
     expect(await manager.exists(path)).toBe('file')
   })
 })

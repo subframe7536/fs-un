@@ -1,4 +1,4 @@
-import type { Prettify, Promisable } from '@subframe7536/type-utils'
+import type { AnyFunction, Prettify, Promisable } from '@subframe7536/type-utils'
 
 export type Serializer = {
   read: (parameter: string) => any
@@ -33,10 +33,6 @@ export type FileAttr = Prettify<BaseFileAttr & {
    */
   size: number
   /**
-   * file scan time
-   */
-  scanTime?: Date
-  /**
    * file change time
    */
   modifiedTime: Date
@@ -54,7 +50,7 @@ export type MoveOptions = {
   /**
    * `to` is name instead of path
    */
-  renameMode?: boolean
+  rename?: boolean
 }
 
 export type CopyOptions = OverwriteOptions
@@ -83,13 +79,14 @@ export interface ReadonlyDirectoryManager {
 
   /**
    * list directory
+   * @throws no such dir
    */
   list: (path: string) => AsyncIterable<ListState>
 
   /**
    * read file data as Buffer or Uint8Array
    */
-  readBytes: (path: string) => Promise<Uint8Array | undefined>
+  readByte: (path: string) => Promise<Uint8Array | undefined>
   /**
    * read file data as string
    */
@@ -125,7 +122,7 @@ export interface DirectoryManager extends ReadonlyDirectoryManager {
   remove: (path: string) => Promise<void>
 }
 
-export type WalkOptions<T, N> = {
+export type WalkOptions<T extends AnyFunction, N> = {
   /**
    * whether to include directories
    */
@@ -149,7 +146,7 @@ export type WalkOptions<T, N> = {
   /**
    * transform result, `state` is undefined if `isDirectory` is `true`
    */
-  transform?: (path: string, isDirectory: boolean) => Promisable<T>
+  transform?: T
   /**
    * whether to filter `null` and `undefined` result from `transform`
    * @default true

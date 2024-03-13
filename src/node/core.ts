@@ -45,7 +45,7 @@ export class NodeDirectoryManager implements DirectoryManager {
     return await _.exists(this.parsePath(path)) as PathType
   }
 
-  public async readBytes(path: string): Promise<Uint8Array | undefined> {
+  public async readByte(path: string): Promise<Uint8Array | undefined> {
     try {
       const buf = await fsp.readFile(this.parsePath(path))
       return buf ? Uint8Array.from(buf) : undefined
@@ -100,7 +100,7 @@ export class NodeDirectoryManager implements DirectoryManager {
   }
 
   public async move(from: string, to: string, options: MoveOptions = {}): Promise<void> {
-    await _.move(this.parsePath(from), this.parsePath(to), options)
+    await _.move(this.parsePath(from), options.rename ? to : this.parsePath(to), options)
   }
 
   public async copy(from: string, to: string, options?: OverwriteOptions): Promise<void> {

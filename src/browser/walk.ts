@@ -2,16 +2,15 @@ import type { Promisable } from '@subframe7536/type-utils'
 import type { WalkOptions } from '..'
 import { isDirectoryHandle, isFileHandle } from './utils'
 
-type BrowserWalkOptions<T, NotNullish> = Omit<WalkOptions<T, NotNullish>, 'transform'> & {
-  transform?: (p: string, handle: FileSystemHandle) => Promisable<T>
-}
 export async function walk<
   T = string,
   NotNullish extends boolean = true,
   Result = NotNullish extends true ? Exclude<T, null | undefined> : T,
 >(
   root: FileSystemDirectoryHandle,
-  options: BrowserWalkOptions<T, NotNullish> = {},
+  options: WalkOptions<{
+    (p: string, handle: FileSystemHandle): Promisable<T>
+  }, NotNullish> = {},
 ): Promise<Result[]> {
   const {
     maxDepth = Number.POSITIVE_INFINITY,

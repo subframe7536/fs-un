@@ -10,22 +10,22 @@ export const DirectoryManagerErrorCode = {
   Unknown: 'Unknown',
 } as const
 
-export class DirectoryManagerError extends Error {
+export class FsError extends Error {
   public constructor(
     public code: typeof DirectoryManagerErrorCode,
     public fn: string,
-    msg: string,
     public path: string,
+    msg: string,
   ) {
     super(msg)
   }
 }
 
-export function toDirectoryManagerError(
+export function toFsError(
   code: typeof DirectoryManagerErrorCode,
   fn: string,
   msg: string,
   path: string,
 ) {
-  return new DirectoryManagerError(code, fn, msg, normalize(path))
+  return new FsError(code, fn, normalize(path), msg)
 }

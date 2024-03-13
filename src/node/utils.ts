@@ -1,5 +1,5 @@
 import { existsSync, promises as fsp } from 'node:fs'
-import { basename, dirname, extname, join, relative, resolve } from 'pathe'
+import { basename, dirname, extname, join, normalize, relative, resolve } from 'pathe'
 import type { MoveOptions, OverwriteOptions, PathType } from '../types'
 import { walk } from './walk'
 
@@ -60,19 +60,21 @@ export async function copy(
         from.endsWith('asar') && process?.versions?.electron
           // eslint-disable-next-line ts/no-var-requires, ts/no-require-imports, unicorn/prefer-node-protocol
           ? require('original-fs').copyFileSync(from, to)
-          : await walk(from, {
-            includeDirs: true,
-            withRootPath: true,
-            transform: async (srcPath, isDir) => {
-              const destPath = resolve(to, relative(from, srcPath))
-              if (isDir) {
-                await mkdir(destPath)
-              } else {
-                await mkdir(dirname(destPath))
-                await fsp.copyFile(srcPath, destPath)
-              }
-            },
-          })
+          : 'cp' in fsp
+            ? await fsp.cp(from, to, { recursive: true })
+            : await walk(from, {
+              includeDirs: true,
+              withRootPath: true,
+              transform: async (srcPath, isDir) => {
+                const destPath = resolve(to, relative(from, srcPath))
+                if (isDir) {
+                  await mkdir(destPath)
+                } else {
+                  await mkdir(dirname(destPath))
+                  await fsp.copyFile(srcPath, destPath)
+                }
+              },
+            })
         break
       case 'file':
         await fsp.copyFile(from, to)
@@ -125,26 +127,24 @@ export async function move(
   to: string,
   options: MoveOptions = {},
 ): Promise<void> {
-  const { overwrite, renameMode } = options
   const toExists = existsSync(to)
-  if (!overwrite && toExists) {
+  if (!options.overwrite && toExists) {
     throw new Error(`target path "${to}" already exists, cannot overwrite`)
   }
-  if (renameMode) {
-    const extName = extname(from)
-    to = join(dirname(from), basename(to, extName) + extName)
+  if (options.rename) {
+    to = join(dirname(from), to)
   }
-  if (from === to) {
+  if (normalize(from) === normalize(to)) {
     return
   }
   try {
     await fsp.rename(from, to)
   } catch (err) {
-    if (isDirError(err)) {
+    if (isDirError(err) || (isNoPermissionError(err) && options.overwrite)) {
       await remove(to)
       await fsp.rename(from, to)
     } else if (isAnotherDeviceError(err)) {
-      await copy(from, to, { overwrite })
+      await copy(from, to, { overwrite: options.overwrite })
       await remove(from)
     } else if (isNotExistError(err) && !toExists) {
       await mkdir(dirname(to))
@@ -181,6 +181,13 @@ export function isAnotherDeviceError(err: unknown) {
  */
 export function isDirError(err: unknown) {
   return (err as any)?.code === 'EISDIR'
+}
+
+/**
+ * error code is `EPERM`
+ */
+export function isNoPermissionError(err: unknown) {
+  return (err as any)?.code === 'EPERM'
 }
 
 /**

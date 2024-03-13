@@ -1,6 +1,5 @@
-import { For, createSignal } from 'solid-js'
+import { BrowserDirectoryManager, getUserDir } from '../src/browser'
 import { walk } from '../src/browser/walk'
-import { initHandle } from './use'
 
 // export default function App() {
 //   const [root, setRoot] = createSignal<FileSystemDirectoryHandle>()
@@ -23,10 +22,13 @@ import { initHandle } from './use'
 // }
 export default function App() {
   async function handleClick() {
-    const handle = await window.showDirectoryPicker()
-    console.log(
-      await walk(handle, { includeDirs: true, maxDepth: 3, withRootPath: true }),
-    )
+    // const handle = await window.showDirectoryPicker()
+    // console.log(
+    //   await walk(handle, { includeDirs: true, maxDepth: 3, withRootPath: true }),
+    // )
+    const manager = new BrowserDirectoryManager(await getUserDir())
+    await manager.mkdir('test/test/test')
+    console.log(await manager.exists('test/test/test'))
   }
   return (
     <div>

@@ -13,3 +13,4 @@ unified util to manage files and directories inside a directory on different pla
 - [ ] tree structure?
 - [ ] https://github.com/humanwhocodes/humanfs/blob/main/packages/web/src/web-hfs.js
 - [ ] https://github.com/microsoft/vscode/blob/main/src/vs/platform/files/browser/htmlFileSystemProvider.ts
+- [ ] https://github.com/whatwg/fs/blob/main/proposals/MovingNonOpfsFiles.md

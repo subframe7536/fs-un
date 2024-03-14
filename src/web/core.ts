@@ -1,15 +1,11 @@
 import { basename, dirname, extname, join, normalize } from 'pathe'
-import type { AnyFunction } from '@subframe7536/type-utils'
-import type { DirectoryManager, FileAttr, ListState, MoveOptions, OverwriteOptions, PathType } from '../types'
+import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType } from '../types'
 import * as _ from './utils'
-import { walk } from './walk'
 
-export class BrowserDirectoryManager implements DirectoryManager {
+export class WebFS implements IFS {
   public constructor(
     private root: FileSystemDirectoryHandle,
-  ) {
-    console.log(root.name)
-  }
+  ) { }
 
   public async exists(path: string | FileSystemHandle): Promise<PathType> {
     const handle = await _.exists(this.root, path)

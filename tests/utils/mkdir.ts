@@ -1,40 +1,40 @@
 import { join } from 'pathe'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { DirectoryManager } from '../../src'
+import type { IFS } from '../../src'
 
-export function testMkdir(manager: DirectoryManager) {
+export function testMkdir(ifs: IFS) {
   describe('test mkdir', () => {
     const dirName = 'testEnsureDir'
     beforeEach(async () => {
-      await manager.mkdir(dirName)
+      await ifs.mkdir(dirName)
     })
     afterEach(async () => {
-      await manager.remove(dirName)
+      await ifs.remove(dirName)
     })
     it('target path not exist', async () => {
       const path = join(dirName, 'test', 'deeo', 'deep')
-      await manager.mkdir(path)
-      expect(await manager.exists(path)).toBe('dir')
+      await ifs.mkdir(path)
+      expect(await ifs.exists(path)).toBe('dir')
     })
 
     it('target path exists dir', async () => {
       const path = join(dirName, 'test')
-      await manager.mkdir(path)
-      await manager.mkdir(path)
-      expect(await manager.exists(path)).toBe('dir')
+      await ifs.mkdir(path)
+      await ifs.mkdir(path)
+      expect(await ifs.exists(path)).toBe('dir')
     })
 
     it('target path exists file', async () => {
       const path = join(dirName, 'test')
-      await manager.writeFile(path, 'test')
-      await manager.mkdir(path)
-      expect(await manager.exists(path)).toBe('file')
+      await ifs.writeFile(path, 'test')
+      await ifs.mkdir(path)
+      expect(await ifs.exists(path)).toBe('file')
     })
 
     it('parent dir exists file', async () => {
       const path = join(dirName, 'test')
-      await manager.writeFile(path, 'test')
-      expect(() => manager.mkdir(join(path, 'test2'))).rejects.toThrowError()
+      await ifs.writeFile(path, 'test')
+      expect(() => ifs.mkdir(join(path, 'test2'))).rejects.toThrowError()
     })
   })
 }

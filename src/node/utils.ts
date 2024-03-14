@@ -1,6 +1,7 @@
 import { existsSync, promises as fsp } from 'node:fs'
-import { basename, dirname, extname, join, normalize, relative, resolve } from 'pathe'
+import { dirname, join, normalize, relative, resolve } from 'pathe'
 import type { MoveOptions, OverwriteOptions, PathType } from '../types'
+import { FsErrorCode, toFsError } from '../error'
 import { walk } from './walk'
 
 /**
@@ -24,13 +25,11 @@ async function copyLink(from: string, to: string) {
   try {
     await fsp.symlink(symlinkPointsAt, to)
   } catch (err) {
-    // There is already file/symlink with this name on destination location.
-    // Must erase it manually, otherwise system won't allow us to place symlink there.
     if (isAlreadyExistError(err)) {
       await fsp.unlink(to)
       await fsp.symlink(symlinkPointsAt, to)
     } else {
-      throw err
+      throw toFsError(FsErrorCode.Unknown, 'copyLink', (err as any).message, from, to)
     }
   }
 }

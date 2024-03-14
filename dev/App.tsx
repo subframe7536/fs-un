@@ -1,5 +1,4 @@
-import { BrowserDirectoryManager, getUserDir } from '../src/browser'
-import { walk } from '../src/browser/walk'
+import { WebFS, getUserRoot } from '../src/web'
 
 // export default function App() {
 //   const [root, setRoot] = createSignal<FileSystemDirectoryHandle>()
@@ -26,7 +25,7 @@ export default function App() {
     // console.log(
     //   await walk(handle, { includeDirs: true, maxDepth: 3, withRootPath: true }),
     // )
-    const manager = new BrowserDirectoryManager(await getUserDir())
+    const manager = new WebFS(await getUserRoot())
     await manager.mkdir('test/test/test')
     console.log(await manager.exists('test/test/test'))
   }

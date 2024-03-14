@@ -68,8 +68,7 @@ export async function walk<
     queue.push([handle, basePath, maxDepth - 1])
   }
   while (queue.length) {
-    const batch = queue.splice(0, 8)
-    await Promise.all(batch.map(([handle, path, depth]) => build(handle, path, depth)))
+    await Promise.all(queue.splice(0, 8).map(([handle, path, depth]) => build(handle, path, depth)))
   }
 
   return result

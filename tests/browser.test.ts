@@ -1,5 +1,5 @@
-import { BrowserDirectoryManager, getOpfsDir } from '../src/browser'
+import { WebFS, getOpfsRoot } from '../src/web'
 import { testSuite } from './utils'
 
-const root = await getOpfsDir()
-testSuite(new BrowserDirectoryManager(root))
+const root = await getOpfsRoot()
+testSuite(new WebFS(root))

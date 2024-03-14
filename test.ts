@@ -1,4 +1,7 @@
-import { walk } from './src'
+// import { fdir } from 'fdir'
+// import { walk } from './src'
 
-const path = 'src'
-walk(path, { includeDirs: true }).then(l => console.log(l))
+import { mkdir, writeFile } from 'node:fs/promises'
+
+await writeFile('a', 'a')
+await mkdir('a/a/a/a', { recursive: true })

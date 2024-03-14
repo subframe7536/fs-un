@@ -53,8 +53,6 @@ export type MoveOptions = {
   rename?: boolean
 }
 
-export type CopyOptions = OverwriteOptions
-
 export type PathType = 'file' | 'dir' | 'other' | false
 
 export type OverwriteOptions = { overwrite?: boolean }
@@ -66,7 +64,7 @@ export type ListState = {
   isSymlink: boolean
 }
 
-export interface ReadonlyDirectoryManager {
+export interface IReadonlyFs {
   /**
    * check file or directory
    */
@@ -93,7 +91,7 @@ export interface ReadonlyDirectoryManager {
   readText: (path: string) => Promise<string | undefined>
 }
 
-export interface DirectoryManager extends ReadonlyDirectoryManager {
+export interface IFS extends IReadonlyFs {
   /**
    * ensure directory exist, auto create parent directory
    *

@@ -1,5 +1,5 @@
 import { get, set } from 'idb-keyval'
-import { getUserDir } from '../src/browser'
+import { getUserRoot } from '../src/web'
 
 export async function initHandle() {
   const root = await get('root') as FileSystemDirectoryHandle
@@ -7,7 +7,7 @@ export async function initHandle() {
     await root.requestPermission({ mode: 'readwrite' })
     return root
   }
-  const newHandle = await getUserDir()
+  const newHandle = await getUserRoot()
   await set('root', newHandle)
   return newHandle
 }

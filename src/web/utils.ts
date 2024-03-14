@@ -1,20 +1,24 @@
 import { basename, dirname } from 'pathe'
-import type { PathType } from '../types'
 
-export function isSupportFs() {
-  return typeof globalThis.showDirectoryPicker === 'function'
-}
 export interface RootHandleOption {
   id?: string
   mode?: 'read' | 'readwrite'
   startIn?: FileSystemHandle | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos'
 }
 
-export async function getUserDir(options?: RootHandleOption) {
+export function isSupportUserRoot() {
+  return typeof globalThis.showDirectoryPicker === 'function'
+}
+
+export async function getUserRoot(options?: RootHandleOption): Promise<FileSystemDirectoryHandle> {
   return await globalThis.showDirectoryPicker(options)
 }
 
-export async function getOpfsDir() {
+export function isSupportOpfsRoot() {
+  return typeof navigator.storage?.getDirectory === 'function'
+}
+
+export async function getOpfsRoot(): Promise<FileSystemDirectoryHandle> {
   return await navigator.storage.getDirectory()
 }
 
@@ -215,7 +219,9 @@ export async function copyDirectory(source: FileSystemDirectoryHandle, destinati
         task.push(copyFile(entry, await destination.getFileHandle(entry.name, { create: true })))
       }
     }
-    await Promise.all(task)
+    while (task.length) {
+      await Promise.all(task.splice(0, 8))
+    }
   }
 }
 

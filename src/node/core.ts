@@ -1,9 +1,10 @@
 import fsp from 'node:fs/promises'
+import { readFileSync } from 'node:fs'
 import { dirname, join, parse, relative } from 'pathe'
-import type { DirectoryManager, FileAttr, ListState, MoveOptions, OverwriteOptions, PathType } from '..'
+import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType } from '..'
 import * as _ from './utils'
 
-export class NodeDirectoryManager implements DirectoryManager {
+export class NodeFS implements IFS {
   public constructor(
     private root: string,
   ) { }
@@ -47,7 +48,8 @@ export class NodeDirectoryManager implements DirectoryManager {
 
   public async readByte(path: string): Promise<Uint8Array | undefined> {
     try {
-      const buf = await fsp.readFile(this.parsePath(path))
+      // sync style is much faster than async
+      const buf = readFileSync(this.parsePath(path))
       return buf ? Uint8Array.from(buf) : undefined
     } catch (error) {
       if (_.isNotExistError(error) || _.isDirError(error)) {
@@ -59,7 +61,8 @@ export class NodeDirectoryManager implements DirectoryManager {
 
   public async readText(path: string): Promise<string | undefined> {
     try {
-      return await fsp.readFile(this.parsePath(path), 'utf-8')
+      // sync style is much faster than async
+      return readFileSync(this.parsePath(path), 'utf-8')
     } catch (error) {
       if (_.isNotExistError(error) || _.isDirError(error)) {
         return undefined

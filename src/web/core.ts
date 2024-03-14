@@ -1,5 +1,6 @@
 import { basename, dirname, extname, join, normalize } from 'pathe'
 import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType } from '../types'
+import { FsErrorCode, toFsError } from '../error'
 import * as _ from './utils'
 
 export class WebFS implements IFS {
@@ -16,7 +17,7 @@ export class WebFS implements IFS {
   }
 
   public async fileAttr(path: string): Promise<FileAttr | undefined> {
-    const handle = await _.getHandleFromPath(this.root, path, { isFile: true })
+    const handle = await _.getHandleFromPath(this.root, 'fileAttr', path, { isFile: true })
     if (!handle) {
       return undefined
     }
@@ -33,9 +34,9 @@ export class WebFS implements IFS {
   }
 
   public async *list(path: string): AsyncIterable<ListState> {
-    const handle = await _.getHandleFromPath(this.root, path, { isFile: false })
+    const handle = await _.getHandleFromPath(this.root, 'list', path, { isFile: false })
     if (!handle) {
-      throw new Error('no such dir')
+      throw toFsError(FsErrorCode.NotExists, 'list', `"${path}" does not exist`, path)
     }
     for await (const entry of handle.values()) {
       yield {
@@ -48,20 +49,18 @@ export class WebFS implements IFS {
   }
 
   public async readByte(path: string): Promise<Uint8Array | undefined> {
-    const handle = await _.getHandleFromPath(this.root, path, { isFile: true })
+    const handle = await _.getHandleFromPath(this.root, 'readByte', path, { isFile: true })
     return handle ? new Uint8Array(await (await handle.getFile()).arrayBuffer()) : undefined
   }
 
   public async readText(path: string): Promise<string | undefined> {
-    const handle = await _.getHandleFromPath(this.root, path, { isFile: true })
+    const handle = await _.getHandleFromPath(this.root, 'readText', path, { isFile: true })
     return handle ? await (await handle.getFile()).text() : undefined
   }
 
   public async mkdir(path: string): Promise<void> {
-    const result = await _.getHandleFromPath(this.root, path, { create: 1, parent: true })
-    if (!result) {
-      throw new Error(`cannot create dir "${path}"`)
-    }
+    const handle = await _.getParentDir(this.root, 'mkdir', path, true)
+    await handle.getDirectoryHandle(basename(path), { create: true })
   }
 
   public async writeFile(
@@ -70,15 +69,16 @@ export class WebFS implements IFS {
     options: OverwriteOptions = {},
   ): Promise<void> {
     if (!options.overwrite && await _.exists(this.root, path)) {
-      throw new Error(`"${path}" already exists`)
+      throw toFsError(
+        FsErrorCode.AlreadyExists,
+        'writeFile',
+        `"${path}" already exists, cannot overwrite`,
+        typeof path === 'string' ? path : path.name,
+      )
     }
     const targetHandle = typeof path === 'string'
-      ? await _.getHandleFromPath(this.root, path, { create: true, isFile: true })
+      ? await _.getHandleFromPath(this.root, 'writeFile', path, { create: true, isFile: true, parent: true })
       : path
-
-    if (!targetHandle) {
-      throw new Error(`cannot create file "${path}"`)
-    }
 
     const writable = await targetHandle.createWritable()
     await writable.write(data)
@@ -99,37 +99,31 @@ export class WebFS implements IFS {
     }
     const fromHandle = await _.exists(this.root, from)
     if (!fromHandle) {
-      throw new Error(`"${from}" does not exist`)
+      throw toFsError(FsErrorCode.NotExists, 'copy', `"${from}" does not exist`, from)
     }
 
     if (!options.overwrite && await _.exists(this.root, to)) {
-      throw new Error(`"${to}" already exists`)
+      throw toFsError(FsErrorCode.AlreadyExists, 'copy', `"${to}" already exists, cannot overwrite`, to)
     }
 
     if (_.isFileHandle(fromHandle)) {
-      const toHandle = await _.getHandleFromPath(this.root, to, { isFile: true, create: 1, parent: true })
-      if (!toHandle) {
-        throw new Error(`cannot create file "${to}"`)
-      }
+      const toHandle = await _.getHandleFromPath(this.root, 'copy', to, { isFile: true, create: 1, parent: true })
       await _.copyFile(fromHandle, toHandle)
     } else if (_.isDirectoryHandle(fromHandle)) {
-      const toHandle = await _.getHandleFromPath(this.root, to, { isFile: false, create: 1, parent: true })
-      if (!toHandle) {
-        throw new Error(`cannot create directory "${to}"`)
-      }
+      const toHandle = await _.getHandleFromPath(this.root, 'copy', to, { isFile: false, create: 1, parent: true })
       await _.copyDirectory(fromHandle, toHandle)
     }
   }
 
   public async remove(path: string): Promise<void> {
-    const parent = await _.getParentDir(this.root, path, false)
     try {
-      await parent?.removeEntry(basename(path), { recursive: true })
+      const parent = await _.getParentDir(this.root, 'remove', path, false)
+      await parent.removeEntry(basename(path), { recursive: true })
     } catch (error) {
       // only handle TypeError, others have no effect
       // see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/removeEntry#exceptions
       if (error instanceof TypeError) {
-        throw error
+        throw toFsError(FsErrorCode.NotExists, 'remove', `"${path}" does not exist`, path)
       }
     }
   }

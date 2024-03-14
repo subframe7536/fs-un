@@ -1,4 +1,5 @@
 import { basename, dirname } from 'pathe'
+import { FsErrorCode, toFsError } from '../error'
 
 export interface RootHandleOption {
   id?: string
@@ -30,7 +31,7 @@ export function isDirectoryHandle(handle: FileSystemHandle): handle is FileSyste
   return handle.kind === 'directory'
 }
 
-export async function getParentDir(root: FileSystemDirectoryHandle, path: string, create: boolean): Promise<FileSystemDirectoryHandle | undefined> {
+export async function getParentDir(root: FileSystemDirectoryHandle, fn: string, path: string, create: boolean): Promise<FileSystemDirectoryHandle> {
   let hasPermissions = await root.queryPermission() === 'granted'
 
   try {
@@ -40,21 +41,36 @@ export async function getParentDir(root: FileSystemDirectoryHandle, path: string
   } catch { }
 
   if (!hasPermissions) {
-    throw new Error('no permission')
+    throw toFsError(FsErrorCode.NoPermission, fn, 'cannot get root directory', path)
   }
 
-  try {
-    let handle = root
-    const pathItems = dirname(path).split('/').filter(p => p && p !== '.')
-    for (const name of pathItems) {
+  let handle = root
+  const pathItems = dirname(path).split('/').filter(p => p && p !== '.')
+  for (let i = 0; i < pathItems.length; i++) {
+    const name = pathItems[i]
+    try {
       handle = await handle.getDirectoryHandle(name, { create })
+    } catch (err) {
+      const _path = pathItems.slice(0, i + 1).join('/')
+      if (err instanceof DOMException) {
+        switch (err.name) {
+          case 'NotFoundError':
+            throw toFsError(FsErrorCode.NotExists, fn, `"${_path}" does not exist`, _path)
+          case 'TypeMismatchError':
+            throw toFsError(
+              FsErrorCode.TypeMisMatch,
+              fn,
+              `"${_path}" exists a file, cannot get parent directory`,
+              _path,
+            )
+        }
+      }
+      throw toFsError(FsErrorCode.Unknown, fn, `unknown error, ${JSON.stringify(err)}`, path)
     }
-    return handle
-  } catch {
-    return undefined
   }
+  return handle
 }
-type GetHandleFromPathOptionsBasic = {
+type GetHandleFromPathOptionsBasic<T extends boolean | undefined | 1> = {
   /**
    * whether to create parent directory
    */
@@ -65,64 +81,92 @@ type GetHandleFromPathOptionsBasic = {
    * if the value is `1`, it will handle `TypeMismatchError` to make sure the file type,
    * and create if `isFile` is `undefined`
    */
-  create?: boolean | 1
+  create?: T
 }
-type GetHandleFromPathOptions = GetHandleFromPathOptionsBasic & { isFile?: undefined }
-type GetFileHandleFromPathOptions = GetHandleFromPathOptionsBasic & { isFile: true }
-type GetDirectoryHandleFromPathOptions = GetHandleFromPathOptionsBasic & { isFile: false }
+type GetHandleFromPathOptions<T extends boolean | undefined | 1> = GetHandleFromPathOptionsBasic<T> & { isFile?: undefined }
+type GetFileHandleFromPathOptions<T extends boolean | undefined | 1> = GetHandleFromPathOptionsBasic<T> & { isFile: true }
+type GetDirectoryHandleFromPathOptions<T extends boolean | undefined | 1> = GetHandleFromPathOptionsBasic<T> & { isFile: false }
 
 /**
  * try to get directory handle from path first, then try to get file handle
  *
  * `options.create` is no effect when value is `boolean`, but when is set to `1`, it will create
  */
-export async function getHandleFromPath(
+export async function getHandleFromPath<T extends boolean | undefined | 1 = undefined>(
   root: FileSystemDirectoryHandle,
+  fn: string,
   path: string,
-  options?: GetHandleFromPathOptions,
-): Promise<FileSystemHandle | undefined>
+  options?: GetHandleFromPathOptions<T>,
+): Promise<T extends (true | 1) ? FileSystemHandle : FileSystemHandle | undefined>
 /**
  * try to get file handle from path
  *
  * when `options.create` is set to `1`, it will handle `TypeMismatchError`
  */
-export async function getHandleFromPath(
+export async function getHandleFromPath<T extends boolean | undefined | 1 = undefined>(
   root: FileSystemDirectoryHandle,
+  fn: string,
   path: string,
-  options?: GetFileHandleFromPathOptions,
-): Promise<FileSystemFileHandle | undefined>
+  options?: GetFileHandleFromPathOptions<T>,
+): Promise<T extends (true | 1) ? FileSystemFileHandle : FileSystemFileHandle | undefined>
 /**
  * try to get directory handle from path
  *
  * when `options.create` is set to `1`, it will handle `TypeMismatchError`
  */
-export async function getHandleFromPath(
+export async function getHandleFromPath<T extends boolean | undefined | 1 = undefined>(
   root: FileSystemDirectoryHandle,
+  fn: string,
   path: string,
-  options?: GetDirectoryHandleFromPathOptions,
-): Promise<FileSystemDirectoryHandle | undefined>
-export async function getHandleFromPath(
+  options?: GetDirectoryHandleFromPathOptions<T>,
+): Promise<T extends (true | 1) ? FileSystemDirectoryHandle : FileSystemDirectoryHandle | undefined>
+export async function getHandleFromPath<T extends boolean | undefined | 1 = undefined>(
   root: FileSystemDirectoryHandle,
+  fn: string,
   path: string,
-  options: GetHandleFromPathOptionsBasic & { isFile?: boolean } = {},
+  options: GetHandleFromPathOptionsBasic<T> & { isFile?: boolean } = {},
 ): Promise<any> {
   const { create = false, isFile, parent = false } = options
-  const parentHandle = await getParentDir(root, path, parent)
-  if (!parentHandle) {
-    return undefined
+
+  let parentHandle
+  try {
+    parentHandle = await getParentDir(root, fn, path, parent)
+  } catch (err) {
+    if (!create) {
+      return undefined
+    } else {
+      throw err
+    }
   }
   const name = basename(path)
-  const fn = isFile ? 'getFileHandle' : 'getDirectoryHandle'
+  const getter = isFile ? 'getFileHandle' : 'getDirectoryHandle'
   try {
     if (typeof isFile === 'boolean') {
-      return await parentHandle[fn](name, { create: !!create })
+      return await parentHandle[getter](name, { create: !!create })
     }
   } catch (err) {
-    if ((err as Error).name === 'TypeMismatchError' && create === 1) {
-      await parentHandle.removeEntry(name, { recursive: true })
-      return await parentHandle[fn](name, { create: true })
+    if (!create) {
+      return undefined
     }
-    return undefined
+    if (err instanceof DOMException) {
+      switch (err.name) {
+        case 'NotFoundError':
+          throw toFsError(FsErrorCode.NotExists, fn, `"${path}" does not exist`, path)
+        case 'TypeMismatchError':
+          if (create === 1) {
+            await parentHandle.removeEntry(name, { recursive: true })
+            return await parentHandle[getter](name, { create: true })
+          } else {
+            throw toFsError(
+              FsErrorCode.TypeMisMatch,
+              fn,
+              `"${path}" already exists a ${isFile ? 'directory' : 'file'}`,
+              path,
+            )
+          }
+      }
+    }
+    throw toFsError(FsErrorCode.Unknown, fn, `unknown error, ${JSON.stringify(err)}`, path)
   }
   try {
     return await parentHandle.getDirectoryHandle(name, { create: !!create })
@@ -130,7 +174,13 @@ export async function getHandleFromPath(
     try {
       return await parentHandle.getFileHandle(name, { create: !!create })
     } catch (err) {
-      return undefined
+      if (!create) {
+        return undefined
+      }
+      if (err instanceof DOMException && err.name === 'NotFoundError') {
+        throw toFsError(FsErrorCode.NotExists, fn, `"${path}" does not exist`, path)
+      }
+      throw toFsError(FsErrorCode.Unknown, fn, `unknown error, ${JSON.stringify(err)}`, path)
     }
   }
 }
@@ -139,10 +189,26 @@ export async function getHandleFromPath(
  * get file handle from path and check exists
  */
 export async function exists(root: FileSystemDirectoryHandle, path: string | FileSystemHandle): Promise<FileSystemHandle | undefined> {
-  const handle = typeof path === 'string' ? await getHandleFromPath(root, path) : path
-  if (!handle) {
-    return undefined
+  let handle = path as FileSystemHandle
+  if (typeof path === 'string') {
+    let parent
+    try {
+      parent = await getParentDir(root, 'exists', path, false)
+    } catch {
+      return undefined
+    }
+    const name = basename(path)
+    try {
+      handle = await parent.getDirectoryHandle(name)
+    } catch {
+      try {
+        handle = await parent.getFileHandle(name)
+      } catch {
+        return undefined
+      }
+    }
   }
+
   if (isFileHandle(handle)) {
     try {
       await handle.getFile()

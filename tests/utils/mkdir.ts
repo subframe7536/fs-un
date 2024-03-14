@@ -27,14 +27,13 @@ export function testMkdir(ifs: IFS) {
     it('target path exists file', async () => {
       const path = join(dirName, 'test')
       await ifs.writeFile(path, 'test')
-      await ifs.mkdir(path)
-      expect(await ifs.exists(path)).toBe('file')
+      expect(ifs.mkdir(path)).rejects.toThrowError()
     })
 
     it('parent dir exists file', async () => {
       const path = join(dirName, 'test')
-      await ifs.writeFile(path, 'test')
-      expect(() => ifs.mkdir(join(path, 'test2'))).rejects.toThrowError()
+      await ifs.writeFile(path, 'Hello, world!')
+      expect(ifs.mkdir(join(path, 'test2'))).rejects.toThrowError()
     })
   })
 }

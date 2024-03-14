@@ -93,9 +93,7 @@ export interface IReadonlyFs {
 
 export interface IFS extends IReadonlyFs {
   /**
-   * ensure directory exist, auto create parent directory
-   *
-   * return ensured path. if is `undefined`, `path` is a exist file
+   * ensure directory exists, auto create parent directory
    */
   mkdir: (path: string) => Promise<void>
 

@@ -3,6 +3,7 @@ import { dirname, join, normalize, relative, resolve } from 'pathe'
 import type { MoveOptions, OverwriteOptions, PathType } from '../types'
 import { FsErrorCode, toFsError } from '../error'
 import { walk } from './walk'
+import { handleRestError, isAlreadyExistError, isAnotherDeviceError, isDirError, isNoPermissionError, isNotExistsError } from './error'
 
 /**
  * create a directory, auto skip if exists
@@ -13,10 +14,7 @@ export async function mkdir(path: string): Promise<void> {
   try {
     await fsp.mkdir(path, { recursive: true })
   } catch (err) {
-    if (isAlreadyExistError(err)) {
-      return
-    }
-    throw err
+    throw handleRestError(err, 'mkdir', path)
   }
 }
 
@@ -28,9 +26,8 @@ async function copyLink(from: string, to: string) {
     if (isAlreadyExistError(err)) {
       await fsp.unlink(to)
       await fsp.symlink(symlinkPointsAt, to)
-    } else {
-      throw toFsError(FsErrorCode.Unknown, 'copyLink', (err as any).message, from, to)
     }
+    throw handleRestError(err, 'copyLink', from, to)
   }
 }
 /**
@@ -47,7 +44,7 @@ export async function copy(
     if (overwrite) {
       await remove(to)
     } else {
-      throw new Error(`dest path "${to}" already exists, cannot overwrite`)
+      throw toFsError(FsErrorCode.AlreadyExists, 'copy', `"${to}" already exist, cannot overwrite`, from, to)
     }
   } else {
     await mkdir(dirname(to))
@@ -82,14 +79,14 @@ export async function copy(
         await copyLink(from, to)
         break
       default:
-        throw new Error(`"${from}" not exists`)
+        throw toFsError(FsErrorCode.NotExists, 'copy', `"${from}" does not exist`, from, to)
     }
   } catch (err) {
-    if (isNotExistError(err)) {
+    if (isNotExistsError(err)) {
       await mkdir(dirname(to))
       await copy(from, to, options)
     }
-    throw err
+    throw handleRestError(err, 'copy', from, to)
   }
 }
 
@@ -109,10 +106,10 @@ export async function exists(path: string): Promise<PathType | 'link'> {
       return 'other'
     }
   } catch (err) {
-    if (isNotExistError(err)) {
+    if (isNotExistsError(err)) {
       return false
     }
-    throw err
+    throw handleRestError(err, 'exists', path)
   }
 }
 
@@ -145,11 +142,11 @@ export async function move(
     } else if (isAnotherDeviceError(err)) {
       await copy(from, to, { overwrite: options.overwrite })
       await remove(from)
-    } else if (isNotExistError(err) && !toExists) {
+    } else if (isNotExistsError(err) && !toExists) {
       await mkdir(dirname(to))
       await fsp.rename(from, to)
     } else {
-      throw err
+      throw handleRestError(err, 'move', from, to)
     }
   }
 }
@@ -158,40 +155,9 @@ export async function move(
  * remove directory and files recursively
  */
 export async function remove(path: string): Promise<void> {
-  await fsp.rm(path, { recursive: true, maxRetries: 3, retryDelay: 500, force: true })
-}
-
-/**
- * error code is `ENOENT`
- */
-export function isNotExistError(err: unknown) {
-  return (err as any)?.code === 'ENOENT'
-}
-
-/**
- * error code is `EXDEV`
- */
-export function isAnotherDeviceError(err: unknown) {
-  return (err as any)?.code === 'EXDEV'
-}
-
-/**
- * error code is `EISDIR`
- */
-export function isDirError(err: unknown) {
-  return (err as any)?.code === 'EISDIR'
-}
-
-/**
- * error code is `EPERM`
- */
-export function isNoPermissionError(err: unknown) {
-  return (err as any)?.code === 'EPERM'
-}
-
-/**
- * error code is `EEXIST`
- */
-export function isAlreadyExistError(err: unknown) {
-  return (err as any)?.code === 'EEXIST'
+  try {
+    await fsp.rm(path, { recursive: true, maxRetries: 3, retryDelay: 500, force: true })
+  } catch (error) {
+    throw handleRestError(error, 'remove', path)
+  }
 }

@@ -2,7 +2,6 @@
 
 unified util to manage files and directories inside a directory on different platforms
 
-**Unsupport for link**
 ### support platform
 
 - Nodejs `fs` module

@@ -8,9 +8,7 @@ export async function walk<
   Result = NotNullish extends true ? Exclude<T, null | undefined> : T,
 >(
   root: FileSystemDirectoryHandle,
-  options: WalkOptions<{
-    (p: string, handle: FileSystemHandle): Promisable<T>
-  }, NotNullish> = {},
+  options: WalkOptions<(p: string, handle: FileSystemHandle) => Promisable<T>, NotNullish> = {},
 ): Promise<Result[]> {
   const {
     maxDepth = Number.POSITIVE_INFINITY,

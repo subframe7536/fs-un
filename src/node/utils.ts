@@ -2,6 +2,7 @@ import { existsSync, promises as fsp } from 'node:fs'
 import { dirname, join, normalize, relative, resolve } from 'pathe'
 import type { MoveOptions, OverwriteOptions, PathType } from '../types'
 import { FsErrorCode, toFsError } from '../error'
+import { DirectoryRelationType } from '../utils'
 import { walk } from './walk'
 import { handleRestError, isAlreadyExistError, isAnotherDeviceError, isDirError, isNoPermissionError, isNotExistsError } from './error'
 
@@ -159,5 +160,19 @@ export async function remove(path: string): Promise<void> {
     await fsp.rm(path, { recursive: true, maxRetries: 3, retryDelay: 500, force: true })
   } catch (error) {
     throw handleRestError(error, 'remove', path)
+  }
+}
+
+export function getDirectoryRelation(sourcePath: string, targetPath: string) {
+  const relativePath = relative(sourcePath, targetPath)
+
+  if (!relativePath) {
+    return DirectoryRelationType.IsSame
+  } else if (/^[./]*$/.test(relativePath)) {
+    return DirectoryRelationType.IsParentOfTargetDirectories
+  } else if (!relativePath.includes('..')) {
+    return DirectoryRelationType.IsInsideTargetDirectory
+  } else {
+    return DirectoryRelationType.IsDifferent
   }
 }

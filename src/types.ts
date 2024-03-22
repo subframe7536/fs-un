@@ -13,20 +13,15 @@ export type BaseFileAttr = {
    */
   dir: string
   /**
-   * file name without extension
+   * file name without extension name, e.g. `README`
    */
   name: string
   /**
-   * extension name with dot
+   * extension name with dot, e.g. `.md`
    */
   ext: string
 }
-export type BaseFileAttrWithRoot = Prettify<BaseFileAttr & {
-  /**
-   * file root
-   */
-  root: string
-}>
+
 export type FileAttr = Prettify<BaseFileAttr & {
   /**
    * file size
@@ -37,10 +32,6 @@ export type FileAttr = Prettify<BaseFileAttr & {
    */
   modifiedTime: Date
 }>
-export type FindOptions = {
-  recursive?: boolean
-  match: (path: string, isFile: boolean) => Promisable<boolean>
-}
 
 export type MoveOptions = {
   /**
@@ -103,12 +94,12 @@ export interface IFS extends IReadonlyFs {
   writeFile: (path: string, data: string | ArrayBuffer | ArrayBufferView, options?: OverwriteOptions) => Promise<void>
 
   /**
-   * move or rename file or dir, in default, throw error when overwrite
+   * move or rename file or dir, in default, throw error when overwrite by default
    */
   move: (from: string, to: string, options?: MoveOptions) => Promise<void>
 
   /**
-   * copy file or dir, in default, throw error when overwrite
+   * copy file or dir, throw error when overwrite by default
    */
   copy: (from: string, to: string, options?: OverwriteOptions) => Promise<void>
 

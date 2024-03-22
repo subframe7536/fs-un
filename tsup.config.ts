@@ -6,7 +6,8 @@ export default defineConfig({
   format: ['esm', 'cjs'],
   entry: {
     index: './src/index.ts',
-    browser: './src/browser/index.ts',
+    web: './src/web/index.ts',
+    utils: './src/utils.ts',
   },
   external: ['vite', 'esbuild', 'original-fs'],
 })

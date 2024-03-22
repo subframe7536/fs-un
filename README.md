@@ -4,7 +4,7 @@ unified util to manage files and directories inside a directory on different pla
 
 ## Usage
 
-## support platform
+## Support platforms
 
 ### Node
 
@@ -39,7 +39,7 @@ const ifs = new WebIFS(root)
 walk(ifs.root)
 ```
 
-### types
+### Types
 
 ```ts
 export interface IReadonlyFS {
@@ -97,7 +97,7 @@ export interface IFS extends IReadonlyFS {
 }
 ```
 
-## reference
+## Reference
 
 - [humanfs](https://github.com/humanwhocodes/humanfs/blob/main/packages/web/src/web-hfs.js)
 - [vscode](https://github.com/microsoft/vscode/blob/main/src/vs/platform/files/browser/htmlFileSystemProvider.ts)

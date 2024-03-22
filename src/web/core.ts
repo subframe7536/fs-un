@@ -5,7 +5,7 @@ import * as _ from './utils'
 
 export class WebFS implements IFS {
   public constructor(
-    private root: FileSystemDirectoryHandle,
+    public root: FileSystemDirectoryHandle,
   ) { }
 
   public async exists(path: string | FileSystemHandle): Promise<PathType> {

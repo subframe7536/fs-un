@@ -55,7 +55,7 @@ export type ListState = {
   isSymlink: boolean
 }
 
-export interface IReadonlyFs {
+export interface IReadonlyFS {
   /**
    * check file or directory
    */
@@ -82,7 +82,7 @@ export interface IReadonlyFs {
   readText: (path: string) => Promise<string | undefined>
 }
 
-export interface IFS extends IReadonlyFs {
+export interface IFS extends IReadonlyFS {
   /**
    * ensure directory exists, auto create parent directory
    */

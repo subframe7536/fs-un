@@ -10,7 +10,7 @@ import { handleRestError } from './error'
 export class NodeFS implements IFS {
   private parsePath: (p: string) => string
   public constructor(
-    private root?: string,
+    public root?: string,
   ) {
     this.parsePath = this.root
       ? p => join(this.root!, p).replace(/\/$/, '')

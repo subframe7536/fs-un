@@ -11,9 +11,9 @@ unified util to manage files and directories inside a directory on different pla
 Nodejs `fs` module
 
 ```ts
-import { NodeIFS, walk } from 'fs-un'
+import { NodeFS, walk } from 'fs-un'
 
-const ifs = new NodeIFS('/path/to/dir')
+const ifs = new NodeFS('/path/to/dir')
 
 walk(ifs.root)
 ```
@@ -23,7 +23,7 @@ walk(ifs.root)
 [`File Systen Access API`](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API)
 
 ```ts
-import { WebIFS, getOpfsRoot, getUserRoot, isSupportOpfsRoot, isSupportUserRoot, walk } from 'fs-un/web'
+import { WebFS, getOpfsRoot, getUserRoot, isSupportOpfsRoot, isSupportUserRoot, walk } from 'fs-un/web'
 
 let root
 if (isSupportUserRoot()) {
@@ -34,7 +34,7 @@ if (isSupportUserRoot()) {
   throw new Error('not support')
 }
 
-const ifs = new WebIFS(root)
+const ifs = new WebFS(root)
 
 walk(ifs.root)
 ```

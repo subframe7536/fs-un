@@ -18,7 +18,7 @@ export async function mkdir(path: string): Promise<void> {
   }
 }
 
-async function copyLink(from: string, to: string) {
+async function copyLink(from: string, to: string): Promise<void> {
   const symlinkPointsAt = await fsp.readlink(from)
   try {
     await fsp.symlink(symlinkPointsAt, to)
@@ -53,24 +53,27 @@ export async function copy(
   try {
     switch (await exists(from)) {
       case 'dir':
-        from.endsWith('asar') && process?.versions?.electron
-          // eslint-disable-next-line ts/no-var-requires, ts/no-require-imports, unicorn/prefer-node-protocol
-          ? require('original-fs').copyFileSync(from, to)
-          : 'cp' in fsp
-            ? await fsp.cp(from, to, { recursive: true })
-            : await walk(from, {
-              includeDirs: true,
-              withRootPath: true,
-              transform: async (srcPath, isDir) => {
-                const destPath = resolve(to, relative(from, srcPath))
-                if (isDir) {
-                  await mkdir(destPath)
-                } else {
-                  await mkdir(dirname(destPath))
-                  await fsp.copyFile(srcPath, destPath)
-                }
-              },
-            })
+        if (from.endsWith('asar') && process?.versions?.electron) {
+          // @ts-expect-error electron
+          (await import('node:original-fs')).copyFileSync(from, to)
+        } else if (
+          'cp' in fsp) {
+          await fsp.cp(from, to, { recursive: true })
+        } else {
+          await walk(from, {
+            includeDirs: true,
+            withRootPath: true,
+            transform: async (srcPath, isDir) => {
+              const destPath = resolve(to, relative(from, srcPath))
+              if (isDir) {
+                await mkdir(destPath)
+              } else {
+                await mkdir(dirname(destPath))
+                await fsp.copyFile(srcPath, destPath)
+              }
+            },
+          })
+        }
         break
       case 'file':
         await fsp.copyFile(from, to)

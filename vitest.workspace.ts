@@ -10,6 +10,7 @@ export default defineWorkspace([
     test: {
       include: ['tests/browser.test.ts'],
       browser: {
+        provider: 'webdriverio',
         name: 'edge',
         enabled: true,
         headless: true,

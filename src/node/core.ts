@@ -1,7 +1,8 @@
 import fsp from 'node:fs/promises'
 import { readFileSync } from 'node:fs'
+import type { Readable } from 'node:stream'
 import { dirname, join, normalize, parse, relative } from 'pathe'
-import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType } from '..'
+import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType, ReadStreamEvent, ReadStreamOptions } from '..'
 import { FsErrorCode, toFsError } from '../error'
 import * as _ from './utils'
 import * as _e from './error'
@@ -10,6 +11,9 @@ import { handleRestError } from './error'
 export class NodeFS implements IFS {
   private parsePath: (p: string) => string
   public constructor(
+    /**
+     * Absolute path to the root directory
+     */
     public root?: string,
   ) {
     this.parsePath = this.root
@@ -67,6 +71,43 @@ export class NodeFS implements IFS {
     }
   }
 
+  public async readStream(
+    path: string,
+    listener: ReadStreamEvent,
+    options: ReadStreamOptions = {},
+  ): Promise<void> {
+    const { length, position = 0, signal } = options
+    let stream: Readable | undefined
+
+    try {
+      const fileHandle = await fsp.open(this.parsePath(path), 'r')
+      const stream = fileHandle.createReadStream({
+        start: position,
+        end: length ? position + length - 1 : undefined,
+        autoClose: true,
+        encoding: null, // force stream to be read as raw bytes
+        highWaterMark: 64 * 1024,
+      })
+
+      for await (const chunk of stream) {
+        if (signal?.aborted) {
+          break
+        }
+        await listener(undefined, chunk)
+      }
+
+      await listener(undefined, undefined)
+    } catch (error) {
+      if (_e.isNotExistsError(error) || _e.isDirError(error)) {
+        await listener(undefined, undefined)
+      } else {
+        await listener(handleRestError(error, 'readStream', path), undefined)
+      }
+    } finally {
+      stream?.destroy()
+    }
+  }
+
   public async readText(path: string): Promise<string | undefined> {
     try {
       // sync style is much faster than async
@@ -92,12 +133,14 @@ export class NodeFS implements IFS {
       )
     }
 
+    path = this.parsePath(path)
+
     if (!options.overwrite && await _.exists(path)) {
       throw toFsError(FsErrorCode.AlreadyExists, 'writeFile', `"${path}" already exists, cannot overwrite`, path)
     }
 
     try {
-      await fsp.writeFile(this.parsePath(path), data as string | Buffer)
+      await fsp.writeFile(path, data as string | Buffer)
     } catch (err) {
       if (_e.isNotExistsError(err)) {
         await fsp.mkdir(dirname(path), { recursive: true })

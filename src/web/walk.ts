@@ -1,5 +1,5 @@
 import type { Promisable } from '@subframe7536/type-utils'
-import type { WalkOptions } from '..'
+import type { WalkOptions } from '../types'
 import { isDirectoryHandle, isFileHandle } from './utils'
 
 export async function walk<
@@ -23,7 +23,7 @@ export async function walk<
   const queue: [FileSystemFileHandle | FileSystemDirectoryHandle, string, number][] = []
   const result: Result[] = []
 
-  const _transform = async (path: string, handle: FileSystemHandle) => {
+  const _transform = async (path: string, handle: FileSystemHandle): Promise<void> => {
     const _ = await transform(path, handle)
     if (!notNullish || (_ !== null && _ !== undefined)) {
       result.push(_ as Result)
@@ -43,7 +43,7 @@ export async function walk<
     handle: FileSystemHandle,
     path: string,
     depth: number,
-  ) {
+  ): Promise<void> {
     if (signal?.aborted || depth < 0) {
       return
     }

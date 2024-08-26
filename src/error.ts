@@ -5,7 +5,7 @@ export const FsErrorCode = {
   NotExists: 'NotExists',
   TypeMisMatch: 'TypeMisMatch',
   NoPermission: 'NoPermission',
-  Unknown: 'unknown',
+  Unknown: 'Unknown',
 } as const
 
 export class FsError extends Error {
@@ -26,6 +26,6 @@ export function toFsError(
   msg: string,
   path: string,
   path2?: string,
-) {
+): FsError {
   return new FsError(code, fn, msg, normalize(path), path2?.normalize(path2))
 }

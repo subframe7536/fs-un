@@ -1,5 +1,5 @@
 import { basename, dirname, extname, join, normalize } from 'pathe'
-import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType } from '../types'
+import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType, ReadStreamEvent, ReadStreamOptions } from '../types'
 import { FsErrorCode, toFsError } from '../error'
 import * as _ from './utils'
 
@@ -51,6 +51,43 @@ export class WebFS implements IFS {
   public async readByte(path: string): Promise<Uint8Array | undefined> {
     const handle = await _.getHandleFromPath(this.root, 'readByte', path, { isFile: true })
     return handle ? new Uint8Array(await (await handle.getFile()).arrayBuffer()) : undefined
+  }
+
+  public async readStream(
+    path: string,
+    listener: ReadStreamEvent,
+    options: ReadStreamOptions = {},
+  ): Promise<void> {
+    const handle = await _.getHandleFromPath(this.root, 'readStream', path, { isFile: true })
+    if (!handle) {
+      await listener(undefined, undefined)
+      return
+    }
+    const { length, position = 0, signal } = options
+    try {
+      const file = await handle.getFile()
+
+      const reader = file.slice(position, length ? position + length - 1 : undefined).stream().getReader()
+      let res = await reader.read()
+
+      while (!res.done) {
+        if (signal?.aborted) {
+          break
+        }
+
+        await listener(undefined, res.value)
+
+        if (signal?.aborted) {
+          break
+        }
+
+        res = await reader.read()
+      }
+      await listener(undefined, undefined)
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error'
+      await listener(toFsError(FsErrorCode.Unknown, 'readStream', msg, path), undefined)
+    }
   }
 
   public async readText(path: string): Promise<string | undefined> {

@@ -45,39 +45,31 @@
     "release": "pnpm test && pnpm run build && bumpp --all && npm publish",
     "format": "eslint . --fix",
     "test": "vitest --run",
-    "test:dev": "vitest",
-    "test:asd": "esno test.ts"
+    "test:dev": "vitest"
   },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "peerDependencies": {
-    "@types/wicg-file-system-access": "^2020.9.8"
-  },
   "dependencies": {
     "pathe": "^1.1.2"
   },
   "devDependencies": {
-    "@solid-hooks/core": "^0.1.3",
-    "@subframe7536/eslint-config": "^0.6.0",
+    "@solid-hooks/core": "^0.3.7",
+    "@subframe7536/eslint-config": "^0.7.6",
     "@subframe7536/type-utils": "^0.1.6",
-    "@types/node": "^20.12.4",
-    "@vitest/browser": "^1.4.0",
-    "bumpp": "^9.4.0",
-    "eslint": "^8.57.0",
+    "@types/node": "^20.16.1",
+    "@types/wicg-file-system-access": "^2023.10.5",
+    "@vitest/browser": "^2.0.5",
+    "bumpp": "^9.5.2",
+    "eslint": "^9.9.1",
     "idb-keyval": "^6.2.1",
-    "solid-js": "^1.8.16",
-    "tsup": "^8.0.2",
-    "typescript": "^5.4.3",
-    "vite": "^5.2.8",
+    "solid-js": "^1.8.21",
+    "tsup": "^8.2.4",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2",
     "vite-plugin-solid": "^2.10.2",
-    "vitest": "^1.4.0",
-    "webdriverio": "^8.35.1"
-  },
-  "pnpm": {
-    "overrides": {
-      "has": "npm:@nolyfill/has@latest"
-    }
+    "vitest": "^2.0.5",
+    "webdriverio": "^9.0.7"
   }
 }

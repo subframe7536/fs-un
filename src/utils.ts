@@ -7,7 +7,9 @@ type DiffResult = {
 }
 
 export function diffDir(oldArr: FileAttr[], newArr: FileAttr[]): DiffResult {
-  const createMap = (arr: FileAttr[]) => new Map(arr.map(item => [`${item.dir}/${item.name}${item.ext}`, item]))
+  const createMap = (arr: FileAttr[]): Map<string, FileAttr> => new Map(
+    arr.map(item => [`${item.dir}/${item.name}${item.ext}`, item]),
+  )
 
   const oldMap = createMap(oldArr)
   const newMap = createMap(newArr)

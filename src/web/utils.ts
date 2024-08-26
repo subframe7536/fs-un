@@ -8,7 +8,7 @@ export interface RootHandleOption {
   startIn?: FileSystemHandle | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos'
 }
 
-export function isSupportUserRoot() {
+export function isSupportUserRoot(): boolean {
   return typeof globalThis.showDirectoryPicker === 'function'
 }
 
@@ -16,7 +16,7 @@ export async function getUserRoot(options?: RootHandleOption): Promise<FileSyste
   return await globalThis.showDirectoryPicker(options)
 }
 
-export function isSupportOpfsRoot() {
+export function isSupportOpfsRoot(): boolean {
   return typeof navigator.storage?.getDirectory === 'function'
 }
 
@@ -32,7 +32,15 @@ export function isDirectoryHandle(handle: FileSystemHandle): handle is FileSyste
   return handle.kind === 'directory'
 }
 
-export async function getParentDir(root: FileSystemDirectoryHandle, fn: string, path: string, create: boolean): Promise<FileSystemDirectoryHandle> {
+/**
+ * Get the parent directory handle or throw error
+ */
+export async function getParentDir(
+  root: FileSystemDirectoryHandle,
+  fnName: string,
+  path: string,
+  create: boolean,
+): Promise<FileSystemDirectoryHandle> {
   let hasPermissions = await root.queryPermission() === 'granted'
 
   try {
@@ -42,7 +50,7 @@ export async function getParentDir(root: FileSystemDirectoryHandle, fn: string, 
   } catch { }
 
   if (!hasPermissions) {
-    throw toFsError(FsErrorCode.NoPermission, fn, 'cannot get root directory', path)
+    throw toFsError(FsErrorCode.NoPermission, fnName, 'cannot get root directory', path)
   }
 
   let handle = root
@@ -56,17 +64,17 @@ export async function getParentDir(root: FileSystemDirectoryHandle, fn: string, 
       if (err instanceof DOMException) {
         switch (err.name) {
           case 'NotFoundError':
-            throw toFsError(FsErrorCode.NotExists, fn, `"${_path}" does not exist`, _path)
+            throw toFsError(FsErrorCode.NotExists, fnName, `"${_path}" does not exist`, _path)
           case 'TypeMismatchError':
             throw toFsError(
               FsErrorCode.TypeMisMatch,
-              fn,
+              fnName,
               `"${_path}" exists a file, cannot get parent directory`,
               _path,
             )
         }
       }
-      throw toFsError(FsErrorCode.Unknown, fn, `unknown error, ${JSON.stringify(err)}`, path)
+      throw toFsError(FsErrorCode.Unknown, fnName, `unknown error, ${JSON.stringify(err)}`, path)
     }
   }
   return handle
@@ -84,9 +92,6 @@ type GetHandleFromPathOptionsBasic<T extends boolean | undefined | 1> = {
    */
   create?: T
 }
-type GetHandleFromPathOptions<T extends boolean | undefined | 1> = GetHandleFromPathOptionsBasic<T> & { isFile?: undefined }
-type GetFileHandleFromPathOptions<T extends boolean | undefined | 1> = GetHandleFromPathOptionsBasic<T> & { isFile: true }
-type GetDirectoryHandleFromPathOptions<T extends boolean | undefined | 1> = GetHandleFromPathOptionsBasic<T> & { isFile: false }
 
 /**
  * try to get directory handle from path first, then try to get file handle
@@ -97,7 +102,7 @@ export async function getHandleFromPath<T extends boolean | undefined | 1 = unde
   root: FileSystemDirectoryHandle,
   fn: string,
   path: string,
-  options?: GetHandleFromPathOptions<T>,
+  options?: GetHandleFromPathOptionsBasic<T>,
 ): Promise<T extends (true | 1) ? FileSystemHandle : FileSystemHandle | undefined>
 /**
  * try to get file handle from path
@@ -108,7 +113,7 @@ export async function getHandleFromPath<T extends boolean | undefined | 1 = unde
   root: FileSystemDirectoryHandle,
   fn: string,
   path: string,
-  options?: GetFileHandleFromPathOptions<T>,
+  options?: GetHandleFromPathOptionsBasic<T> & { isFile: true },
 ): Promise<T extends (true | 1) ? FileSystemFileHandle : FileSystemFileHandle | undefined>
 /**
  * try to get directory handle from path
@@ -119,7 +124,7 @@ export async function getHandleFromPath<T extends boolean | undefined | 1 = unde
   root: FileSystemDirectoryHandle,
   fn: string,
   path: string,
-  options?: GetDirectoryHandleFromPathOptions<T>,
+  options?: GetHandleFromPathOptionsBasic<T> & { isFile: false },
 ): Promise<T extends (true | 1) ? FileSystemDirectoryHandle : FileSystemDirectoryHandle | undefined>
 export async function getHandleFromPath<T extends boolean | undefined | 1 = undefined>(
   root: FileSystemDirectoryHandle,
@@ -162,7 +167,7 @@ export async function getHandleFromPath<T extends boolean | undefined | 1 = unde
           }
       }
     }
-    throw toFsError(FsErrorCode.Unknown, fn, `unknown error, ${JSON.stringify(err)}`, path)
+    throw toFsError(FsErrorCode.Unknown, fn, `Unknown error, ${JSON.stringify(err)}`, path)
   }
   try {
     return await parentHandle.getDirectoryHandle(name, { create: !!create })
@@ -219,7 +224,9 @@ export async function exists(root: FileSystemDirectoryHandle, path: string | Fil
     } catch {
       _exists = false
     } finally {
-      _exists && await handle.removeEntry('_CHECK')
+      if (_exists) {
+        await handle.removeEntry('_CHECK')
+      }
     }
     return handle
   }
@@ -267,7 +274,10 @@ export async function copyFile(
   await copyFn(file, writable)
 }
 
-export async function copyDirectory(source: FileSystemDirectoryHandle, destination: FileSystemDirectoryHandle) {
+export async function copyDirectory(
+  source: FileSystemDirectoryHandle,
+  destination: FileSystemDirectoryHandle,
+): Promise<void> {
   const stack = [[source, destination]]
 
   while (stack.length > 0) {
@@ -300,7 +310,7 @@ export async function builtinMove(
   targetDirHandle: FileSystemDirectoryHandle,
   targetFileName: string
 ): Promise<boolean>
-export async function builtinMove(from: FileSystemFileHandle, ...args: any) {
+export async function builtinMove(from: FileSystemFileHandle, ...args: any): Promise<boolean> {
   if ('move' in from) {
     await (from.move as any)(...args)
     return true

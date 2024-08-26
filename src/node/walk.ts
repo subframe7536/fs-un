@@ -44,7 +44,7 @@ export async function walk<
     ? async (filePath: string, data: Dirent) => filter(filePath, false) && await handleResult(filePath, false, data)
     : async (filePath: string, data: Dirent) => await handleResult(filePath, false, data)
 
-  async function handleResult(path: string, isDir: boolean, data?: Dirent) {
+  async function handleResult(path: string, isDir: boolean, data?: Dirent): Promise<void> {
     const _ = await _transform(path, isDir, data)
     if (!notNullish || (_ !== null && _ !== undefined)) {
       result.push(_ as Result)
@@ -54,10 +54,10 @@ export async function walk<
   return new Promise((resolve, reject) => {
     let taskCount = 0
     let err: any = null
-    const enqueue = () => taskCount++
-    const dequeue = () => --taskCount === 0 && (err == null ? resolve(result) : reject(err))
+    const enqueue = (): any => taskCount++
+    const dequeue = (): any => --taskCount === 0 && (err == null ? resolve(result) : reject(err))
 
-    function walkDir(directoryPath: string, depth: number) {
+    function walkDir(directoryPath: string, depth: number): void {
       if (depth < 0 || err != null || signal?.aborted) {
         return
       }
@@ -78,9 +78,11 @@ export async function walk<
           await Promise.all(
             entries.map(async (entry) => {
               const currentPath = `${directoryPath}/${entry.name}`
-              entry.isDirectory()
-                ? walkDir(currentPath, depth - 1)
-                : await pushFile(currentPath, entry)
+              if (entry.isDirectory()) {
+                walkDir(currentPath, depth - 1)
+              } else {
+                await pushFile(currentPath, entry)
+              }
             }),
           )
           dequeue()

@@ -1,4 +1,5 @@
 import type { AnyFunction, Prettify, Promisable } from '@subframe7536/type-utils'
+import type { FsError } from './error'
 
 export type Serializer = {
   read: (parameter: string) => any
@@ -9,33 +10,33 @@ export type FilterFn = (path: string, attr: FileAttr) => (FileAttr | undefined)
 
 export type BaseFileAttr = {
   /**
-   * relative dir path of root, start without `.`
+   * Relative dir path of root, start without `.`
    */
   dir: string
   /**
-   * file name without extension name, e.g. `README`
+   * File name without extension name, e.g. `README`
    */
   name: string
   /**
-   * extension name with dot, e.g. `.md`
+   * Extension name with dot, e.g. `.md`
    */
   ext: string
 }
 
 export type FileAttr = Prettify<BaseFileAttr & {
   /**
-   * file size
+   * File size
    */
   size: number
   /**
-   * file change time
+   * File change time
    */
   modifiedTime: Date
 }>
 
 export type MoveOptions = {
   /**
-   * whether overwrite target path
+   * Whether overwrite target path
    */
   overwrite?: boolean
   /**
@@ -55,87 +56,114 @@ export type ListState = {
   isSymlink: boolean
 }
 
+export type ReadStreamEvent = (error: FsError | undefined, data: Uint8Array | undefined) => Promisable<void>
+
+export type ReadStreamOptions = {
+  /**
+   * Start position in the stream
+   * @default 0
+   */
+  position?: number
+  /**
+   * Read length
+   */
+  length?: number
+  /**
+   * Abort signal
+   */
+  signal?: AbortSignal
+}
+
 export interface IReadonlyFS {
   /**
-   * check file or directory
+   * Check file or directory
    */
   exists: (path: string) => Promise<PathType>
 
   /**
-   * get file attributes
+   * Get file attributes
    */
   fileAttr: (path: string) => Promise<FileAttr | undefined>
 
   /**
-   * list directory
+   * List directory
    * @throws no such dir
    */
   list: (path: string) => AsyncIterable<ListState>
 
   /**
-   * read file data as Buffer or Uint8Array
+   * Read file data as Buffer or Uint8Array
    */
   readByte: (path: string) => Promise<Uint8Array | undefined>
   /**
-   * read file data as string
+   * Read file data as string
    */
   readText: (path: string) => Promise<string | undefined>
 }
 
-export interface IFS extends IReadonlyFS {
+export interface IStreamFs {
   /**
-   * ensure directory exists, auto create parent directory
+   * Streamly read file content
+   *
+   * If received data is undefined, the stream is ended
+   */
+  readStream: (path: string, listener: ReadStreamEvent, options?: ReadStreamOptions) => Promise<void>
+}
+
+export interface IFS extends IReadonlyFS, IStreamFs {
+  /**
+   * Ensure directory exists, auto create parent directory
    */
   mkdir: (path: string) => Promise<void>
 
   /**
-   * write data to file
+   * Write data to file
    */
   writeFile: (path: string, data: string | ArrayBuffer | ArrayBufferView, options?: OverwriteOptions) => Promise<void>
 
   /**
-   * move or rename file or dir, in default, throw error when overwrite by default
+   * Move or rename file or dir, in default, throw error when overwrite by default
    */
   move: (from: string, to: string, options?: MoveOptions) => Promise<void>
 
   /**
-   * copy file or dir, throw error when overwrite by default
+   * Copy file or dir, throw error when overwrite by default
    */
   copy: (from: string, to: string, options?: OverwriteOptions) => Promise<void>
 
   /**
-   * remove directory and file recursively
+   * Remove directory and file recursively
    */
   remove: (path: string) => Promise<void>
 }
 
 export type WalkOptions<T extends AnyFunction, N> = {
   /**
-   * whether to include directories
+   * Whether to include directories
    */
   includeDirs?: boolean
   /**
-   * whether to prepend root dir path when transform
+   * Whether to prepend root dir path when transform
    */
   withRootPath?: boolean
   /**
-   * max directory depth
+   * Max directory depth
    */
   maxDepth?: number
   /**
-   * filter files or directories, executed before `transform`
+   * Filter files or directories, executed before `transform`
    */
   filter?: (path: string, isDirectory: boolean) => boolean
   /**
-   * abort controller
+   * Abort controller
    */
   signal?: AbortSignal
   /**
-   * transform result, `state` is undefined if `isDirectory` is `true`
+   * Transform result, `state` is undefined if `isDirectory` is `true`
    */
   transform?: T
   /**
-   * whether to filter `null` and `undefined` result from `transform`
+   * Whether to filter `null` and `undefined` result from `transform`
    * @default true
    */
   notNullish?: N

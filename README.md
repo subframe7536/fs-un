@@ -1,10 +1,10 @@
 # fs-un
 
-unified util to manage files and directories inside a directory on different platforms
+Unified util to manage files and directories inside a directory on different platforms
 
 ## Usage
 
-## Support platforms
+## Support Platforms
 
 ### Node
 

@@ -152,18 +152,13 @@ export async function getHandleFromPath<T extends boolean | undefined | 1 = unde
     if (err instanceof DOMException) {
       switch (err.name) {
         case 'NotFoundError':
-          throw toFsError(FsErrorCode.NotExists, fn, `"${path}" does not exist`, path)
+          return undefined
         case 'TypeMismatchError':
           if (create === 1) {
             await parentHandle.removeEntry(name, { recursive: true })
             return await parentHandle[getter](name, { create: true })
           } else {
-            throw toFsError(
-              FsErrorCode.TypeMisMatch,
-              fn,
-              `"${path}" already exists a ${isFile ? 'directory' : 'file'}`,
-              path,
-            )
+            return undefined
           }
       }
     }

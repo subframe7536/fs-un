@@ -1,6 +1,6 @@
 import { basename, dirname } from 'pathe'
 import { FsErrorCode, toFsError } from '../error'
-import { DirectoryRelationType } from '../utils'
+import type { DirectoryRelationType } from '../types'
 
 export interface RootHandleOption {
   id?: string
@@ -316,18 +316,18 @@ export async function builtinMove(from: FileSystemFileHandle, ...args: any) {
 export async function getDirectoryHandleRelation(
   sourceHandle: FileSystemDirectoryHandle,
   targetHandle: FileSystemDirectoryHandle,
-): Promise<typeof DirectoryRelationType[keyof typeof DirectoryRelationType]> {
+): Promise<DirectoryRelationType> {
   if (await sourceHandle.isSameEntry(targetHandle) && sourceHandle.name === targetHandle.name) {
-    return DirectoryRelationType.IsSame
+    return 'same'
   }
 
   if (await targetHandle.resolve(sourceHandle)) {
-    return DirectoryRelationType.IsInsideTargetDirectory
+    return 'child'
   }
 
   if (await sourceHandle.resolve(targetHandle)) {
-    return DirectoryRelationType.IsParentOfTargetDirectories
+    return 'parent'
   }
 
-  return DirectoryRelationType.IsDifferent
+  return 'diff'
 }

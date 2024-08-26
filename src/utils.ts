@@ -33,10 +33,3 @@ export function diffDir(oldArr: FileAttr[], newArr: FileAttr[]): DiffResult {
 
   return { insertList, updateList, deleteList }
 }
-
-export const DirectoryRelationType = {
-  IsSame: 0,
-  IsInsideTargetDirectory: 1,
-  IsParentOfTargetDirectories: 2,
-  IsDifferent: 3,
-} as const

@@ -162,6 +162,7 @@ export class WebFS implements IFS {
       if (error instanceof TypeError) {
         throw toFsError(FsErrorCode.NotExists, 'remove', `"${path}" does not exist`, path)
       }
+      throw error
     }
   }
 }

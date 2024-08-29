@@ -162,6 +162,10 @@ export class NodeFS implements IFS {
   }
 
   public async remove(path: string): Promise<void> {
-    return await _.remove(this.parsePath(path))
+    const targetPath = this.parsePath(path)
+    if (targetPath === this.root) {
+      throw toFsError(FsErrorCode.NoPermission, 'remove', 'Cannot remove root directory', path)
+    }
+    return await _.remove(targetPath)
   }
 }

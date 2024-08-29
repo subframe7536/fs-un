@@ -101,7 +101,7 @@ export class WebFS implements IFS {
   }
 
   public async writeFile(
-    path: string | FileSystemFileHandle,
+    path: string,
     data: string | ArrayBuffer | ArrayBufferView,
     options: OverwriteOptions = {},
   ): Promise<void> {
@@ -110,12 +110,15 @@ export class WebFS implements IFS {
         FsErrorCode.AlreadyExists,
         'writeFile',
         `"${path}" already exists, cannot overwrite`,
-        typeof path === 'string' ? path : path.name,
+        path,
       )
     }
-    const targetHandle = typeof path === 'string'
-      ? await _.getHandleFromPath(this.root, 'writeFile', path, { create: true, isFile: true, parent: true })
-      : path
+    const targetHandle = await _.getHandleFromPath(
+      this.root,
+      'writeFile',
+      path,
+      { create: true, isFile: true, parent: true },
+    )
 
     const writable = await targetHandle.createWritable()
     await writable.write(data)
@@ -126,43 +129,63 @@ export class WebFS implements IFS {
     if (options.rename) {
       to = join(dirname(from), to)
     }
-    await this.copy(from, to, options)
-    await this.remove(from)
+    if (normalize(from) === normalize(to)) {
+      return
+    }
+    if (!options.overwrite && await _.exists(this.root, to)) {
+      throw toFsError(FsErrorCode.AlreadyExists, 'move', `"${to}" already exists, cannot overwrite`, to)
+    }
+    const fromHandle = await _.exists(this.root, from)
+    if (!fromHandle) {
+      throw toFsError(FsErrorCode.NotExists, 'move', `"${from}" does not exist`, from)
+    }
+    await _.copy(fromHandle, this.root, to, 'move.copy')
+    if ('remove' in fromHandle) {
+      // @ts-expect-error support remove()
+      await target.remove(path)
+      return
+    }
+    await this.remove(from, 'move.remove')
   }
 
-  public async copy(from: string, to: string, options: OverwriteOptions = {}): Promise<void> {
+  public async copy(from: string, to: string, options: OverwriteOptions = {}, fnName = 'copy'): Promise<void> {
     if (normalize(from) === normalize(to)) {
       return
     }
     const fromHandle = await _.exists(this.root, from)
     if (!fromHandle) {
-      throw toFsError(FsErrorCode.NotExists, 'copy', `"${from}" does not exist`, from)
+      throw toFsError(FsErrorCode.NotExists, fnName, `"${from}" does not exist`, from)
     }
 
     if (!options.overwrite && await _.exists(this.root, to)) {
-      throw toFsError(FsErrorCode.AlreadyExists, 'copy', `"${to}" already exists, cannot overwrite`, to)
+      throw toFsError(FsErrorCode.AlreadyExists, fnName, `"${to}" already exists, cannot overwrite`, to)
     }
 
-    if (_.isFileHandle(fromHandle)) {
-      const toHandle = await _.getHandleFromPath(this.root, 'copy', to, { isFile: true, create: 1, parent: true })
-      await _.copyFile(fromHandle, toHandle)
-    } else if (_.isDirectoryHandle(fromHandle)) {
-      const toHandle = await _.getHandleFromPath(this.root, 'copy', to, { isFile: false, create: 1, parent: true })
-      await _.copyDirectory(fromHandle, toHandle)
-    }
+    await _.copy(fromHandle, this.root, to, fnName)
   }
 
-  public async remove(path: string): Promise<void> {
+  public async remove(path: string, fnName = 'remove'): Promise<void> {
+    const parent = await _.getParentDir(this.root, fnName, path, false)
+    if (parent === this.root) {
+      throw toFsError(FsErrorCode.NoPermission, fnName, `Cannot remove root directory`, path)
+    }
+    if ('remove' in parent) {
+      const target = await _.getHandleFromPath(parent, 'move', fnName)
+      if (!target) {
+        throw toFsError(FsErrorCode.NotExists, fnName, `"${path}" does not exist`, path)
+      }
+      // @ts-expect-error support remove()
+      await target.remove(path)
+      return
+    }
     try {
-      const parent = await _.getParentDir(this.root, 'remove', path, false)
-      await parent.removeEntry(basename(path), { recursive: true })
+      await parent.removeEntry(path, { recursive: true })
     } catch (error) {
       // only handle TypeError, others have no effect
       // see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/removeEntry#exceptions
       if (error instanceof TypeError) {
-        throw toFsError(FsErrorCode.NotExists, 'remove', `"${path}" does not exist`, path)
+        throw toFsError(FsErrorCode.NotExists, fnName, `"${path}" does not exist`, path)
       }
-      throw error
     }
   }
 }

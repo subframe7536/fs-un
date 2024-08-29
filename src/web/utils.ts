@@ -318,6 +318,21 @@ export async function builtinMove(from: FileSystemFileHandle, ...args: any): Pro
   return false
 }
 
+export async function copy(
+  fromHandle: FileSystemHandle,
+  root: FileSystemDirectoryHandle,
+  to: string,
+  fn: string,
+): Promise<void> {
+  if (isFileHandle(fromHandle)) {
+    const toHandle = await getHandleFromPath(root, fn, to, { isFile: true, create: 1, parent: true })
+    await copyFile(fromHandle, toHandle)
+  } else if (isDirectoryHandle(fromHandle)) {
+    const toHandle = await getHandleFromPath(root, fn, to, { isFile: false, create: 1, parent: true })
+    await copyDirectory(fromHandle, toHandle)
+  }
+}
+
 export async function getDirectoryHandleRelation(
   sourceHandle: FileSystemDirectoryHandle,
   targetHandle: FileSystemDirectoryHandle,

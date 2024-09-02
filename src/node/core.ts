@@ -78,34 +78,41 @@ export class NodeFS implements IFS {
   ): Promise<void> {
     const { length, position = 0, signal } = options
     let stream: Readable | undefined
-
+    let fileHandle
     try {
-      const fileHandle = await fsp.open(this.parsePath(path), 'r')
-      const stream = fileHandle.createReadStream({
-        start: position,
-        end: length ? position + length - 1 : undefined,
-        autoClose: true,
-        encoding: null, // force stream to be read as raw bytes
-        highWaterMark: 64 * 1024,
-      })
-
-      for await (const chunk of stream) {
-        if (signal?.aborted) {
-          break
-        }
-        await listener(undefined, chunk)
-      }
-
-      await listener(undefined, undefined)
+      fileHandle = await fsp.open(this.parsePath(path), 'r')
     } catch (error) {
       if (_e.isNotExistsError(error) || _e.isDirError(error)) {
         await listener(undefined, undefined)
       } else {
         await listener(handleRestError(error, 'readStream', path), undefined)
       }
-    } finally {
-      stream?.destroy()
+      return
     }
+    (async () => {
+      try {
+        const stream = fileHandle.createReadStream({
+          start: position,
+          end: length ? position + length - 1 : undefined,
+          autoClose: true,
+          encoding: null, // force stream to be read as raw bytes
+          highWaterMark: 64 * 1024,
+        })
+
+        for await (const chunk of stream) {
+          if (signal?.aborted) {
+            break
+          }
+          await listener(undefined, chunk)
+        }
+
+        await listener(undefined, undefined)
+      } catch (error) {
+        await listener(handleRestError(error, 'readStream', path), undefined)
+      } finally {
+        stream?.destroy()
+      }
+    })()
   }
 
   public async readText(path: string): Promise<string | undefined> {

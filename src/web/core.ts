@@ -63,31 +63,33 @@ export class WebFS implements IFS {
       await listener(undefined, undefined)
       return
     }
-    const { length, position = 0, signal } = options
-    try {
-      const file = await handle.getFile()
+    (async () => {
+      const { length, position = 0, signal } = options
+      try {
+        const file = await handle.getFile()
 
-      const reader = file.slice(position, length ? position + length - 1 : undefined).stream().getReader()
-      let res = await reader.read()
+        const reader = file.slice(position, length ? position + length - 1 : undefined).stream().getReader()
+        let res = await reader.read()
 
-      while (!res.done) {
-        if (signal?.aborted) {
-          break
+        while (!res.done) {
+          if (signal?.aborted) {
+            break
+          }
+
+          await listener(undefined, res.value)
+
+          if (signal?.aborted) {
+            break
+          }
+
+          res = await reader.read()
         }
-
-        await listener(undefined, res.value)
-
-        if (signal?.aborted) {
-          break
-        }
-
-        res = await reader.read()
+        await listener(undefined, undefined)
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Unknown error'
+        await listener(toFsError(FsErrorCode.Unknown, 'readStream', msg, path), undefined)
       }
-      await listener(undefined, undefined)
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Unknown error'
-      await listener(toFsError(FsErrorCode.Unknown, 'readStream', msg, path), undefined)
-    }
+    })()
   }
 
   public async readText(path: string): Promise<string | undefined> {

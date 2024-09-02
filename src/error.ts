@@ -16,7 +16,7 @@ export class FsError extends Error {
     public path: string,
     public path2?: string,
   ) {
-    super(msg)
+    super(`[${code} in \`${fn}\`] ${msg}, ${path}${path2 ? ` -> ${path2}` : ''}`)
   }
 }
 

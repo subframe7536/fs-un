@@ -2,10 +2,10 @@ import { join } from 'pathe'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { IFS } from '../../src'
 
+const dirName1 = 'moveFileTest1'
+const dirName2 = 'moveFileTest2'
 export function testMove(ifs: IFS) {
   describe('test move file', () => {
-    const dirName1 = 'moveFileTest1'
-    const dirName2 = 'moveFileTest2'
     beforeEach(async () => {
       await ifs.mkdir(dirName1)
       await ifs.mkdir(dirName2)

@@ -143,7 +143,12 @@ export class NodeFS implements IFS {
     path = this.parsePath(path)
 
     if (!options.overwrite && await _.exists(path)) {
-      throw toFsError(FsErrorCode.AlreadyExists, 'writeFile', `"${path}" already exists, cannot overwrite`, path)
+      throw toFsError(
+        FsErrorCode.AlreadyExists,
+        'writeFile',
+        `"${path}" already exists, cannot overwrite`,
+        path,
+      )
     }
 
     try {
@@ -169,10 +174,6 @@ export class NodeFS implements IFS {
   }
 
   public async remove(path: string): Promise<void> {
-    const targetPath = this.parsePath(path)
-    if (targetPath === this.root) {
-      throw toFsError(FsErrorCode.NoPermission, 'remove', 'Cannot remove root directory', path)
-    }
-    return await _.remove(targetPath)
+    return await _.remove(this.parsePath(path))
   }
 }

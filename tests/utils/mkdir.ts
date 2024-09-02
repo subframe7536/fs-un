@@ -2,9 +2,9 @@ import { join } from 'pathe'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { IFS } from '../../src'
 
+const dirName = 'testEnsureDir'
 export function testMkdir(ifs: IFS) {
   describe('test mkdir', () => {
-    const dirName = 'testEnsureDir'
     beforeEach(async () => {
       await ifs.mkdir(dirName)
     })

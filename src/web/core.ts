@@ -144,7 +144,7 @@ export class WebFS implements IFS {
     await _.copy(fromHandle, this.root, to, 'move.copy')
     if ('remove' in fromHandle) {
       // @ts-expect-error support remove()
-      await target.remove(path)
+      await fromHandle.remove({ recursive: true })
       return
     }
     await this.remove(from, 'move.remove')
@@ -168,26 +168,22 @@ export class WebFS implements IFS {
 
   public async remove(path: string, fnName = 'remove'): Promise<void> {
     const parent = await _.getParentDir(this.root, fnName, path, false)
-    if (parent === this.root) {
-      throw toFsError(FsErrorCode.NoPermission, fnName, `Cannot remove root directory`, path)
-    }
+    const base = basename(path)
     if ('remove' in parent) {
-      const target = await _.getHandleFromPath(parent, 'move', fnName)
-      if (!target) {
-        throw toFsError(FsErrorCode.NotExists, fnName, `"${path}" does not exist`, path)
+      const target = await _.getHandleFromPath(parent, fnName, base)
+      if (target) {
+        // @ts-expect-error support remove()
+        await target.remove({ recursive: true })
       }
-      // @ts-expect-error support remove()
-      await target.remove(path)
       return
     }
+
     try {
-      await parent.removeEntry(path, { recursive: true })
+      await parent.removeEntry(base, { recursive: true })
     } catch (error) {
-      // only handle TypeError, others have no effect
-      // see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/removeEntry#exceptions
-      if (error instanceof TypeError) {
-        throw toFsError(FsErrorCode.NotExists, fnName, `"${path}" does not exist`, path)
-      }
+      throw toFsError(FsErrorCode.Unknown, fnName, (error as any).toString(), path)
     }
   }
 }
+// only handle TypeError, others have no effect
+// see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/removeEntry#exceptions

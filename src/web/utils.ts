@@ -41,17 +41,17 @@ export async function getParentDir(
   path: string,
   create: boolean,
 ): Promise<FileSystemDirectoryHandle> {
-  let hasPermissions = await root.queryPermission() === 'granted'
-
+  let hasPermissions
   try {
+    hasPermissions = await root.queryPermission() === 'granted'
     if (!hasPermissions) {
       hasPermissions = await root.requestPermission() === 'granted'
     }
   } catch { }
 
-  if (!hasPermissions) {
-    throw toFsError(FsErrorCode.NoPermission, fnName, 'cannot get root directory', path)
-  }
+  // if (!hasPermissions) {
+  //   throw toFsError(FsErrorCode.NoPermission, fnName, 'cannot get root directory', path)
+  // }
 
   let handle = root
   const pathItems = dirname(path).split('/').filter(p => p && p !== '.')

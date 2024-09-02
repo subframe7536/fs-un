@@ -56,20 +56,20 @@
   },
   "devDependencies": {
     "@solid-hooks/core": "^0.3.7",
-    "@subframe7536/eslint-config": "^0.7.6",
+    "@subframe7536/eslint-config": "^0.8.0",
     "@subframe7536/type-utils": "^0.1.6",
-    "@types/node": "^20.16.1",
+    "@types/node": "^20.16.3",
     "@types/wicg-file-system-access": "^2023.10.5",
     "@vitest/browser": "^2.0.5",
     "bumpp": "^9.5.2",
     "eslint": "^9.9.1",
     "idb-keyval": "^6.2.1",
-    "solid-js": "^1.8.21",
+    "playwright": "^1.46.1",
+    "solid-js": "^1.8.22",
     "tsup": "^8.2.4",
     "typescript": "^5.5.4",
     "vite": "^5.4.2",
     "vite-plugin-solid": "^2.10.2",
-    "vitest": "^2.0.5",
-    "webdriverio": "^9.0.7"
+    "vitest": "^2.0.5"
   }
 }

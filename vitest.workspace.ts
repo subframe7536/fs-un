@@ -10,10 +10,11 @@ export default defineWorkspace([
     test: {
       include: ['tests/browser.test.ts'],
       browser: {
-        provider: 'webdriverio',
-        name: 'edge',
+        provider: 'playwright',
+        name: 'chromium',
         enabled: true,
         headless: true,
+        screenshotFailures: false,
       },
     },
   },

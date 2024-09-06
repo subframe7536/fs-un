@@ -2,6 +2,11 @@ import type { Promisable } from '@subframe7536/type-utils'
 import type { WalkOptions } from '../types'
 import { isDirectoryHandle, isFileHandle } from './utils'
 
+/**
+ * Walk a directory handle
+ * @param root root handle
+ * @param options walk options
+ */
 export async function walk<
   T = string,
   NotNullish extends boolean = true,

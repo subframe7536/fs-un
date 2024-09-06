@@ -41,57 +41,68 @@ walk(ifs.root)
 
 ### Types
 
+See more in [`types.ts`](src/types.ts)
+
 ```ts
 export interface IReadonlyFS {
   /**
-   * check file or directory
+   * Check file or directory
    */
   exists: (path: string) => Promise<PathType>
 
   /**
-   * get file attributes
+   * Get file attributes
    */
   fileAttr: (path: string) => Promise<FileAttr | undefined>
 
   /**
-   * list directory
+   * List directory
    * @throws no such dir
    */
   list: (path: string) => AsyncIterable<ListState>
 
   /**
-   * read file data as Buffer or Uint8Array
+   * Read file data as Buffer or Uint8Array
    */
   readByte: (path: string) => Promise<Uint8Array | undefined>
   /**
-   * read file data as string
+   * Read file data as string
    */
   readText: (path: string) => Promise<string | undefined>
 }
 
-export interface IFS extends IReadonlyFS {
+export interface IStreamFs {
   /**
-   * ensure directory exists, auto create parent directory
+   * Streamly read file content
+   *
+   * If received data is undefined, the stream is ended
+   */
+  readStream: (path: string, listener: ReadStreamEvent, options?: ReadStreamOptions) => Promise<void>
+}
+
+export interface IFS extends IReadonlyFS, IStreamFs {
+  /**
+   * Ensure directory exists, auto create parent directory
    */
   mkdir: (path: string) => Promise<void>
 
   /**
-   * write data to file
+   * Write data to file
    */
   writeFile: (path: string, data: string | ArrayBuffer | ArrayBufferView, options?: OverwriteOptions) => Promise<void>
 
   /**
-   * move or rename file or dir, in default, throw error when overwrite by default
+   * Move or rename file or dir, in default, throw error when overwrite by default
    */
   move: (from: string, to: string, options?: MoveOptions) => Promise<void>
 
   /**
-   * copy file or dir, throw error when overwrite by default
+   * Copy file or dir, throw error when overwrite by default
    */
   copy: (from: string, to: string, options?: OverwriteOptions) => Promise<void>
 
   /**
-   * remove directory and file recursively
+   * Remove directory and file recursively
    */
   remove: (path: string) => Promise<void>
 }

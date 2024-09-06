@@ -1,12 +1,7 @@
 import type { AnyFunction, Prettify, Promisable } from '@subframe7536/type-utils'
 import type { FsError } from './error'
 
-export type Serializer = {
-  read: (parameter: string) => any
-  write: (parameter: any) => string
-}
 export type DirectoryRelationType = 'same' | 'child' | 'parent' | 'diff'
-export type FilterFn = (path: string, attr: FileAttr) => (FileAttr | undefined)
 
 export type BaseFileAttr = {
   /**

@@ -3,8 +3,8 @@ import type { Promisable } from '@subframe7536/type-utils'
 import type { WalkOptions } from '../types'
 
 /**
- * walk a directory
- * @param root walk root
+ * Walk a directory
+ * @param root root directory
  * @param options walk options
  */
 export async function walk<

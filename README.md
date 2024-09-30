@@ -23,7 +23,7 @@ walk(ifs.root)
 [`File Systen Access API`](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API)
 
 ```ts
-import { WebFS, getOpfsRoot, getUserRoot, isSupportOpfsRoot, isSupportUserRoot, walk } from 'fs-un/web'
+import { getOpfsRoot, getUserRoot, isSupportOpfsRoot, isSupportUserRoot, walk, WebFS } from 'fs-un/web'
 
 let root
 if (isSupportUserRoot()) {

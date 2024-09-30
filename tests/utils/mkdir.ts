@@ -1,6 +1,6 @@
+import type { IFS } from '../../src'
 import { join } from 'pathe'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { IFS } from '../../src'
 
 const dirName = 'testEnsureDir'
 export function testMkdir(ifs: IFS) {

@@ -1,5 +1,5 @@
-import { basename, dirname, extname, join, normalize } from 'pathe'
 import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType, ReadStreamEvent, ReadStreamOptions } from '../types'
+import { basename, dirname, extname, join, normalize } from 'pathe'
 import { FsErrorCode, toFsError } from '../error'
 import * as _ from './utils'
 

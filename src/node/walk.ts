@@ -1,6 +1,6 @@
-import { type Dirent, readdir } from 'node:fs'
 import type { Promisable } from '@subframe7536/type-utils'
 import type { WalkOptions } from '../types'
+import { type Dirent, readdir } from 'node:fs'
 
 /**
  * Walk a directory

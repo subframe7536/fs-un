@@ -1,6 +1,6 @@
+import type { DirectoryRelationType } from '../types'
 import { basename, dirname } from 'pathe'
 import { FsErrorCode, toFsError } from '../error'
-import type { DirectoryRelationType } from '../types'
 
 export interface RootHandleOption {
   id?: string

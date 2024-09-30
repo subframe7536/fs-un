@@ -1,12 +1,12 @@
-import fsp from 'node:fs/promises'
-import { readFileSync } from 'node:fs'
 import type { Readable } from 'node:stream'
-import { dirname, join, normalize, parse, relative } from 'pathe'
 import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType, ReadStreamEvent, ReadStreamOptions } from '..'
+import { readFileSync } from 'node:fs'
+import fsp from 'node:fs/promises'
+import { dirname, join, normalize, parse, relative } from 'pathe'
 import { FsErrorCode, toFsError } from '../error'
-import * as _ from './utils'
 import * as _e from './error'
 import { handleRestError } from './error'
+import * as _ from './utils'
 
 export class NodeFS implements IFS {
   private parsePath: (p: string) => string

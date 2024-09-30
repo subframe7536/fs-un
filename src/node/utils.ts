@@ -1,9 +1,9 @@
+import type { DirectoryRelationType, MoveOptions, OverwriteOptions, PathType } from '../types'
 import { existsSync, promises as fsp } from 'node:fs'
 import { dirname, join, normalize, relative, resolve } from 'pathe'
-import type { DirectoryRelationType, MoveOptions, OverwriteOptions, PathType } from '../types'
 import { FsErrorCode, toFsError } from '../error'
-import { walk } from './walk'
 import { handleRestError, isAlreadyExistError, isAnotherDeviceError, isDirError, isNoPermissionError, isNotExistsError } from './error'
+import { walk } from './walk'
 
 /**
  * create a directory, auto skip if exists

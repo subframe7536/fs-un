@@ -1,4 +1,4 @@
-import { WebFS, getUserRoot } from '../src/web'
+import { getUserRoot, WebFS } from '../src/web'
 
 // export default function App() {
 //   const [root, setRoot] = createSignal<FileSystemDirectoryHandle>()

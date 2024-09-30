@@ -1,3 +1,3 @@
-export * from 'pathe'
-export * from './types'
 export * from './node'
+export * from './types'
+export * from 'pathe'

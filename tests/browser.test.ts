@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { WebFS, getOpfsRoot, isSupportOpfsRoot } from '../src/web'
+import { getOpfsRoot, isSupportOpfsRoot, WebFS } from '../src/web'
 import { testSuite } from './utils'
 
 if (isSupportOpfsRoot()) {

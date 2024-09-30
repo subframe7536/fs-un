@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { join } from 'pathe'
 import type { IFS } from '../../src'
+import { join } from 'pathe'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { FsError } from '../../src/error'
 
 const dirName = 'testStream'

@@ -55,21 +55,21 @@
     "pathe": "^1.1.2"
   },
   "devDependencies": {
-    "@solid-hooks/core": "^0.3.7",
-    "@subframe7536/eslint-config": "^0.9.0",
+    "@solid-hooks/core": "^0.4.0",
+    "@subframe7536/eslint-config": "^0.9.4",
     "@subframe7536/type-utils": "^0.1.6",
-    "@types/node": "^20.16.5",
+    "@types/node": "^20.16.10",
     "@types/wicg-file-system-access": "^2023.10.5",
-    "@vitest/browser": "^2.0.5",
-    "bumpp": "^9.5.2",
-    "eslint": "^9.9.1",
+    "@vitest/browser": "^2.1.1",
+    "bumpp": "^9.6.1",
+    "eslint": "^9.11.1",
     "idb-keyval": "^6.2.1",
-    "playwright": "^1.47.0",
-    "solid-js": "^1.8.22",
-    "tsup": "^8.2.4",
-    "typescript": "^5.5.4",
-    "vite": "^5.4.3",
+    "playwright": "^1.47.2",
+    "solid-js": "^1.9.1",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.8",
     "vite-plugin-solid": "^2.10.2",
-    "vitest": "^2.0.5"
+    "vitest": "^2.1.1"
   }
 }

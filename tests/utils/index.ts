@@ -1,8 +1,8 @@
 import type { IFS } from '../../src'
 import { testCopy } from './copy'
+import { testIO } from './io'
 import { testMkdir } from './mkdir'
 import { testMove } from './move'
-import { testIO } from './io'
 
 export function testSuite(ifs: IFS) {
   testMkdir(ifs)

@@ -2,6 +2,8 @@
 
 Unified util to manage files and directories inside a directory on different platforms
 
+**In progress, breaking changes expected between patch versions!!**
+
 ## Usage
 
 ## Support Platforms

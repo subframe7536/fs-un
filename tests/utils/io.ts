@@ -16,26 +16,28 @@ export function testIO(ifs: IFS) {
       const path = join(dirName, 'test.txt')
       const content = 'Hello, world!'
       await ifs.writeFile(path, content)
-      ifs.readStream(path, (err, data) => {
-        if (err) {
+      ifs.readStream(path, {
+        error: (err) => {
           expect(err).toBeInstanceOf(FsError)
-        } else if (data) {
+        },
+        data: (data) => {
           expect(data).toBeInstanceOf(Uint8Array)
           expect(data.toString()).toBe(content)
-        }
+        },
       })
     })
     it('read stream with position and length', async () => {
       const path = join(dirName, 'testLength.txt')
       const content = 'Hello, world!'
       await ifs.writeFile(path, content)
-      ifs.readStream(path, (err, data) => {
-        if (err) {
+      ifs.readStream(path, {
+        error: (err) => {
           expect(err).toBeInstanceOf(FsError)
-        } else if (data) {
+        },
+        data: (data) => {
           expect(data).toBeInstanceOf(Uint8Array)
           expect(data.toString()).toBe(content.slice(1, 6))
-        }
+        },
       }, { position: 1, length: 5 })
     })
   })
@@ -50,26 +52,28 @@ export function testIO(ifs: IFS) {
       const path = join(dirName, 'test.txt')
       const content = 'Hello, world!'
       await ifs.writeFile(path, content)
-      ifs.readStream(path, (err, data) => {
-        if (err) {
+      ifs.readStream(path, {
+        error: (err) => {
           expect(err).toBeInstanceOf(FsError)
-        } else if (data) {
+        },
+        data: (data) => {
           expect(data).toBeInstanceOf(Uint8Array)
           expect(data.toString()).toBe(content)
-        }
+        },
       })
     })
     it('read stream with position and length', async () => {
       const path = join(dirName, 'testLength.txt')
       const content = 'Hello, world!'
       await ifs.writeFile(path, content)
-      ifs.readStream(path, (err, data) => {
-        if (err) {
+      ifs.readStream(path, {
+        error: (err) => {
           expect(err).toBeInstanceOf(FsError)
-        } else if (data) {
+        },
+        data: (data) => {
           expect(data).toBeInstanceOf(Uint8Array)
           expect(data.toString()).toBe(content.slice(1, 6))
-        }
+        },
       }, { position: 1, length: 5 })
     })
   })

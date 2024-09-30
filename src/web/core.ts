@@ -60,7 +60,7 @@ export class WebFS implements IFS {
   ): Promise<void> {
     const handle = await _.getHandleFromPath(this.root, 'readStream', path, { isFile: true })
     if (!handle) {
-      await listener(undefined, undefined)
+      await listener.error?.(toFsError(FsErrorCode.NotExists, 'readStream', `"${path}" does not exist`, path))
       return
     }
     (async () => {
@@ -76,7 +76,7 @@ export class WebFS implements IFS {
             break
           }
 
-          await listener(undefined, res.value)
+          await listener.data?.(res.value)
 
           if (signal?.aborted) {
             break
@@ -84,10 +84,10 @@ export class WebFS implements IFS {
 
           res = await reader.read()
         }
-        await listener(undefined, undefined)
+        await listener.end?.()
       } catch (error) {
         const msg = error instanceof Error ? error.message : 'Unknown error'
-        await listener(toFsError(FsErrorCode.Unknown, 'readStream', msg, path), undefined)
+        await listener.error?.(toFsError(FsErrorCode.Unknown, 'readStream', msg, path))
       }
     })()
   }

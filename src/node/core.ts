@@ -82,11 +82,7 @@ export class NodeFS implements IFS {
     try {
       fileHandle = await fsp.open(this.parsePath(path), 'r')
     } catch (error) {
-      if (_e.isNotExistsError(error) || _e.isDirError(error)) {
-        await listener(undefined, undefined)
-      } else {
-        await listener(handleRestError(error, 'readStream', path), undefined)
-      }
+      await listener.error?.(handleRestError(error, 'readStream', path))
       return
     }
     (async () => {
@@ -103,12 +99,12 @@ export class NodeFS implements IFS {
           if (signal?.aborted) {
             break
           }
-          await listener(undefined, chunk)
+          await listener.data?.(chunk)
         }
 
-        await listener(undefined, undefined)
+        await listener.end?.()
       } catch (error) {
-        await listener(handleRestError(error, 'readStream', path), undefined)
+        await listener.error?.(handleRestError(error, 'readStream', path))
       } finally {
         stream?.destroy()
       }

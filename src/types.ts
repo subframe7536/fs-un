@@ -51,7 +51,20 @@ export type ListState = {
   isSymlink: boolean
 }
 
-export type ReadStreamEvent = (error: FsError | undefined, data: Uint8Array | undefined) => Promisable<void>
+export type ReadStreamEvent = {
+  /**
+   * Called when an error occurs
+   */
+  error?: (error: FsError) => Promisable<void>
+  /**
+   * Called when data is read
+   */
+  data?: (data: Uint8Array) => Promisable<void>
+  /**
+   * Called when stream ends
+   */
+  end?: () => Promisable<void>
+}
 
 export type ReadStreamOptions = {
   /**
@@ -87,7 +100,7 @@ export interface IReadonlyFS {
   list: (path: string) => AsyncIterable<ListState>
 
   /**
-   * Read file data as Buffer or Uint8Array
+   * Read file data as Uint8Array
    */
   readByte: (path: string) => Promise<Uint8Array | undefined>
   /**
@@ -99,8 +112,6 @@ export interface IReadonlyFS {
 export interface IStreamFs {
   /**
    * Streamly read file content
-   *
-   * If received data is undefined, the stream is ended
    */
   readStream: (path: string, listener: ReadStreamEvent, options?: ReadStreamOptions) => Promise<void>
 }

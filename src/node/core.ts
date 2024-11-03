@@ -127,15 +127,11 @@ export class NodeFS implements IFS {
     await _.mkdir(this.parsePath(path))
   }
 
-  public async writeFile(path: string, data: string | ArrayBuffer | ArrayBufferView, options: OverwriteOptions = {}): Promise<void> {
-    if (data instanceof ArrayBuffer) {
-      data = Buffer.from(
-        ArrayBuffer.isView(data)
-          ? data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
-          : data,
-      )
-    }
+  public async appendFile(path: string, data: string | Uint8Array): Promise<void> {
+    await fsp.appendFile(this.parsePath(path), data)
+  }
 
+  public async writeFile(path: string, data: string | Uint8Array, options: OverwriteOptions = {}): Promise<void> {
     path = this.parsePath(path)
 
     if (!options.overwrite && await _.exists(path)) {
@@ -148,11 +144,11 @@ export class NodeFS implements IFS {
     }
 
     try {
-      await fsp.writeFile(path, data as string | Buffer)
+      await fsp.writeFile(path, data)
     } catch (err) {
       if (_e.isNotExistsError(err)) {
         await fsp.mkdir(dirname(path), { recursive: true })
-        await fsp.writeFile(path, data as string | Buffer)
+        await fsp.writeFile(path, data)
       } else if (_e.isDirError(err)) {
         throw toFsError(FsErrorCode.TypeMisMatch, 'writeFile', `"${path}" is a directory, cannot write`, path)
       } else {

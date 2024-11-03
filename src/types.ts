@@ -103,6 +103,7 @@ export interface IReadonlyFS {
    * Read file data as Uint8Array
    */
   readByte: (path: string) => Promise<Uint8Array | undefined>
+
   /**
    * Read file data as string
    */
@@ -123,9 +124,14 @@ export interface IFS extends IReadonlyFS, IStreamFs {
   mkdir: (path: string) => Promise<void>
 
   /**
+   * Append data to file
+   */
+  appendFile: (path: string, data: string | Uint8Array) => Promise<void>
+
+  /**
    * Write data to file
    */
-  writeFile: (path: string, data: string | ArrayBuffer | ArrayBufferView, options?: OverwriteOptions) => Promise<void>
+  writeFile: (path: string, data: string | Uint8Array, options?: OverwriteOptions) => Promise<void>
 
   /**
    * Move or rename file or dir, in default, throw error when overwrite by default

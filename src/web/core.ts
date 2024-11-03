@@ -102,9 +102,25 @@ export class WebFS implements IFS {
     await handle.getDirectoryHandle(basename(path), { create: true })
   }
 
+  public async appendFile(path: string, data: string | Uint8Array): Promise<void> {
+    const handle = await _.getHandleFromPath(this.root, 'appendFile', path, { isFile: true })
+    if (!handle) {
+      throw toFsError(FsErrorCode.NotExists, 'appendFile', `"${path}" does not exist or is not a file`, path)
+    }
+    _.writeFile(
+      handle,
+      typeof data === 'string'
+        ? await (await handle.getFile()).text() + data
+        : new Uint8Array([
+          ...new Uint8Array(await (await handle.getFile()).arrayBuffer()),
+          ...data,
+        ]),
+    )
+  }
+
   public async writeFile(
     path: string,
-    data: string | ArrayBuffer | ArrayBufferView,
+    data: string | Uint8Array,
     options: OverwriteOptions = {},
   ): Promise<void> {
     if (!options.overwrite && await _.exists(this.root, path)) {
@@ -122,9 +138,7 @@ export class WebFS implements IFS {
       { create: true, isFile: true, parent: true },
     )
 
-    const writable = await targetHandle.createWritable()
-    await writable.write(data)
-    await writable.close()
+    _.writeFile(targetHandle, data)
   }
 
   public async move(from: string, to: string, options: MoveOptions = {}): Promise<void> {

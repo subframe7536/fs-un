@@ -351,3 +351,12 @@ export async function getDirectoryHandleRelation(
 
   return 'diff'
 }
+
+export async function writeFile(
+  handle: FileSystemFileHandle,
+  data: string | Uint8Array,
+): Promise<void> {
+  const writable = await handle.createWritable()
+  await writable.write(data)
+  await writable.close()
+}

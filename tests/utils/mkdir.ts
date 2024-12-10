@@ -18,14 +18,14 @@ export function testMkdir(ifs: IFS) {
     })
 
     it('target path exists dir', async () => {
-      const path = join(dirName, 'test')
+      const path = join(dirName, 'testExistDir')
       await ifs.mkdir(path)
       await ifs.mkdir(path)
       expect(await ifs.exists(path)).toBe('dir')
     })
 
     it('target path exists file', async () => {
-      const path = join(dirName, 'test')
+      const path = join(dirName, 'testExistFile')
       await ifs.writeFile(path, 'test')
       expect(ifs.mkdir(path)).rejects.toThrowError()
     })

@@ -1,13 +1,13 @@
 import type { Promisable } from '@subframe7536/type-utils'
 import type { WalkOptions } from '../types'
-import { type Dirent, readdir } from 'node:fs'
+import { type Dirent, readdirSync } from 'node:fs'
 
 /**
  * Walk a directory
  * @param root root directory
  * @param options walk options
  */
-export async function walk<
+export async function* walk<
   T = string,
   NotNullish extends boolean = true,
   Result = NotNullish extends true ? Exclude<T, null | undefined> : T,
@@ -17,7 +17,7 @@ export async function walk<
     (path: string, isDirectory: true): Promisable<T>
     (path: string, isDirectory: false, data: Dirent): Promisable<T>
   }, NotNullish> = {},
-): Promise<Result[]> {
+): AsyncIterable<Result> {
   const {
     maxDepth = Number.POSITIVE_INFINITY,
     withRootPath,
@@ -28,68 +28,42 @@ export async function walk<
     transform = (p: string) => p,
   } = options
 
-  const result: Result[] = []
-
   const _transform = withRootPath
     ? (path: string, isDir: any, data?: any) => transform(path, isDir, data)
     : (path: string, isDir: any, data?: any) => transform(path.substring(root.length), isDir, data)
 
-  const pushDirectory = includeDirs
-    ? filter
-      ? async (dirPath: string) => filter(dirPath, true) && await handleResult(dirPath, true)
-      : async (dirPath: string) => await handleResult(dirPath, true)
-    : () => { }
-
-  const pushFile = filter
-    ? async (filePath: string, data: Dirent) => filter(filePath, false) && await handleResult(filePath, false, data)
-    : async (filePath: string, data: Dirent) => await handleResult(filePath, false, data)
-
-  async function handleResult(path: string, isDir: boolean, data?: Dirent): Promise<void> {
-    const _ = await _transform(path, isDir, data)
-    if (!notNullish || (_ !== null && _ !== undefined)) {
-      result.push(_ as Result)
+  async function* walkDir(directoryPath: string, depth: number): AsyncGenerator<Result> {
+    if (depth < 0 || signal?.aborted) {
+      return
     }
-  }
 
-  return new Promise((resolve, reject) => {
-    let taskCount = 0
-    let err: any = null
-    const enqueue = (): any => taskCount++
-    const dequeue = (): any => --taskCount === 0 && (err == null ? resolve(result) : reject(err))
+    const dirEntries = readdirSync(directoryPath, { withFileTypes: true })
+    const dirPath = `${directoryPath}/`
 
-    function walkDir(directoryPath: string, depth: number): void {
-      if (depth < 0 || err != null || signal?.aborted) {
+    if (includeDirs && (!filter || filter(dirPath, true))) {
+      const result = await _transform(dirPath, true)
+      if (!notNullish || result != null) {
+        yield result as Result
+      }
+    }
+
+    for (const dirent of dirEntries) {
+      if (signal?.aborted) {
         return
       }
 
-      enqueue()
+      const currentPath = `${directoryPath}/${dirent.name}`
 
-      // async/await will decrease performance here, resolve is manually controlled by `taskCount`
-      readdir(
-        directoryPath,
-        { withFileTypes: true },
-        async (error, entries) => {
-          if (error) {
-            err = error
-            dequeue()
-          }
-
-          await pushDirectory(`${directoryPath}/`)
-          await Promise.all(
-            entries.map(async (entry) => {
-              const currentPath = `${directoryPath}/${entry.name}`
-              if (entry.isDirectory()) {
-                walkDir(currentPath, depth - 1)
-              } else {
-                await pushFile(currentPath, entry)
-              }
-            }),
-          )
-          dequeue()
-        },
-      )
+      if (dirent.isDirectory()) {
+        yield * walkDir(currentPath, depth - 1)
+      } else if (!filter || filter(currentPath, false)) {
+        const result = await _transform(currentPath, false, dirent)
+        if (!notNullish || result != null) {
+          yield result as Result
+        }
+      }
     }
+  }
 
-    walkDir(root, maxDepth)
-  })
+  yield * walkDir(root, maxDepth)
 }

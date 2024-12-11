@@ -14,7 +14,7 @@ export class NodeFS implements IFS<string> {
     /**
      * Absolute path to the root directory
      */
-    public root?: string,
+    public readonly root: string,
   ) {
     this.parsePath = this.root
       ? p => join(this.root!, p).replace(/\/$/, '')
@@ -138,7 +138,7 @@ export class NodeFS implements IFS<string> {
       throw toFsError(
         FsErrorCode.AlreadyExists,
         'writeFile',
-        `"${path}" already exists, cannot overwrite`,
+        `${path} already exists, cannot overwrite`,
         path,
       )
     }
@@ -150,7 +150,7 @@ export class NodeFS implements IFS<string> {
         await fsp.mkdir(dirname(path), { recursive: true })
         await fsp.writeFile(path, data)
       } else if (_e.isDirError(err)) {
-        throw toFsError(FsErrorCode.TypeMisMatch, 'writeFile', `"${path}" is a directory, cannot write`, path)
+        throw toFsError(FsErrorCode.TypeMisMatch, 'writeFile', `${path} is a directory, cannot write`, path)
       } else {
         throw _e.handleRestError(err, 'writeFile', path)
       }

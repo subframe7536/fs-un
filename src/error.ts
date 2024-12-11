@@ -5,18 +5,18 @@ export const FsErrorCode = {
   NotExists: 'NotExists',
   TypeMisMatch: 'TypeMisMatch',
   NoPermission: 'NoPermission',
-  Unknown: 'Unknown',
+  Unknown: 'UnknownError',
 } as const
 
 export class FsError extends Error {
   public constructor(
     public code: (typeof FsErrorCode)[keyof typeof FsErrorCode],
     public fn: string,
-    msg: string,
+    public message: string,
     public path: string,
     public path2?: string,
   ) {
-    super(`[${code} in \`${fn}\`] ${msg}, ${path}${path2 ? ` -> ${path2}` : ''}`)
+    super(`[${code} in ${fn}()] ${message}, ${path2 ? `${path} -> ${path2}` : ''}`)
   }
 }
 

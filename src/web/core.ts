@@ -99,13 +99,17 @@ export class WebFS implements IFS<FileSystemDirectoryHandle> {
 
   public async mkdir(path: string): Promise<void> {
     const handle = await _.getParentDir(this.root, 'mkdir', path, true)
-    await handle.getDirectoryHandle(basename(path), { create: true })
+    try {
+      await handle.getDirectoryHandle(basename(path), { create: true })
+    } catch (error) {
+      throw _.toWebFsError(error as DOMException, 'mkdir', path)
+    }
   }
 
   public async appendFile(path: string, data: string | Uint8Array): Promise<void> {
     const handle = await _.getHandleFromPath(this.root, 'appendFile', path, { isFile: true })
     if (!handle) {
-      throw toFsError(FsErrorCode.NotExists, 'appendFile', `"${path}" does not exist or is not a file`, path)
+      throw toFsError(FsErrorCode.NotExists, 'appendFile', `${path} does not exist or is not a file`, path)
     }
     _.writeFile(
       handle,
@@ -127,7 +131,7 @@ export class WebFS implements IFS<FileSystemDirectoryHandle> {
       throw toFsError(
         FsErrorCode.AlreadyExists,
         'writeFile',
-        `"${path}" already exists, cannot overwrite`,
+        `${path} already exists, cannot overwrite`,
         path,
       )
     }

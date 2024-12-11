@@ -1,6 +1,6 @@
 import type { DirectoryRelationType } from '../types'
 import { basename, dirname } from 'pathe'
-import { FsErrorCode, toFsError } from '../error'
+import { type FsError, FsErrorCode, toFsError } from '../error'
 
 export interface RootHandleOption {
   id?: string
@@ -60,21 +60,8 @@ export async function getParentDir(
     try {
       handle = await handle.getDirectoryHandle(name, { create })
     } catch (err) {
-      const _path = pathItems.slice(0, i + 1).join('/')
-      if (err instanceof DOMException) {
-        switch (err.name) {
-          case 'NotFoundError':
-            throw toFsError(FsErrorCode.NotExists, fnName, `"${_path}" does not exist`, _path)
-          case 'TypeMismatchError':
-            throw toFsError(
-              FsErrorCode.TypeMisMatch,
-              fnName,
-              `"${_path}" exists a file, cannot get parent directory`,
-              _path,
-            )
-        }
-      }
-      throw toFsError(FsErrorCode.Unknown, fnName, `unknown error, ${JSON.stringify(err)}`, path)
+      const dir = pathItems.slice(0, i + 1).join('/')
+      throw toWebFsError(err, fnName, dir, path)
     }
   }
   return handle
@@ -91,6 +78,23 @@ type GetHandleFromPathOptionsBasic<T extends boolean | undefined | 1> = {
    * and create if `isFile` is `undefined`
    */
   create?: T
+}
+
+export function toWebFsError(err: unknown, fnName: string, dir: string, originalPath?: string): FsError {
+  if (err instanceof DOMException) {
+    switch (err.name) {
+      case 'NotFoundError':
+        return toFsError(FsErrorCode.NotExists, fnName, `${dir} does not exist`, dir)
+      case 'TypeMismatchError':
+        return toFsError(
+          FsErrorCode.TypeMisMatch,
+          fnName,
+          `${dir} exists a file, cannot get parent directory`,
+          dir,
+        )
+    }
+  }
+  return toFsError(FsErrorCode.Unknown, fnName, `Unknown error, ${JSON.stringify(err)}`, originalPath || dir)
 }
 
 /**

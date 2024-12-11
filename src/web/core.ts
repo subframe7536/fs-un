@@ -3,9 +3,9 @@ import { basename, dirname, extname, join, normalize } from 'pathe'
 import { FsErrorCode, toFsError } from '../error'
 import * as _ from './utils'
 
-export class WebFS implements IFS {
+export class WebFS implements IFS<FileSystemDirectoryHandle> {
   public constructor(
-    public root: FileSystemDirectoryHandle,
+    public readonly root: FileSystemDirectoryHandle,
   ) { }
 
   public async exists(path: string | FileSystemHandle): Promise<PathType> {

@@ -82,7 +82,8 @@ export type ReadStreamOptions = {
   signal?: AbortSignal
 }
 
-export interface IReadonlyFS {
+export interface IReadonlyFS<RootType> {
+  readonly root: RootType
   /**
    * Check file or directory
    */
@@ -117,7 +118,7 @@ export interface IStreamFs {
   readStream: (path: string, listener: ReadStreamEvent, options?: ReadStreamOptions) => Promise<void>
 }
 
-export interface IFS extends IReadonlyFS, IStreamFs {
+export interface IFS<RootType = any> extends IReadonlyFS<RootType>, IStreamFs {
   /**
    * Ensure directory exists, auto create parent directory
    */

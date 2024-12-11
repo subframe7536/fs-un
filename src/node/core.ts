@@ -8,7 +8,7 @@ import * as _e from './error'
 import { handleRestError } from './error'
 import * as _ from './utils'
 
-export class NodeFS implements IFS {
+export class NodeFS implements IFS<string> {
   private parsePath: (p: string) => string
   public constructor(
     /**

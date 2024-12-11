@@ -40,7 +40,7 @@ export async function* walk<
     const dirEntries = readdirSync(directoryPath, { withFileTypes: true })
     const dirPath = `${directoryPath}/`
 
-    if (includeDirs && (!filter || filter(dirPath, true))) {
+    if (includeDirs && directoryPath !== root && (!filter || filter(dirPath, true))) {
       const result = await _transform(dirPath, true)
       if (!notNullish || result != null) {
         yield result as Result

@@ -111,13 +111,13 @@ export class WebFS implements IFS<FileSystemDirectoryHandle> {
     if (!handle) {
       throw toFsError(FsErrorCode.NotExists, 'appendFile', `${path} does not exist or is not a file`, path)
     }
-    _.writeFile(
+    await _.writeFile(
       handle,
       typeof data === 'string'
         ? await (await handle.getFile()).text() + data
-        : new Uint8Array([
-          ...new Uint8Array(await (await handle.getFile()).arrayBuffer()),
-          ...data,
+        : _.mergeUint8Arrays([
+          new Uint8Array(await (await handle.getFile()).arrayBuffer()),
+          data,
         ]),
     )
   }
@@ -142,7 +142,7 @@ export class WebFS implements IFS<FileSystemDirectoryHandle> {
       { create: true, isFile: true, parent: true },
     )
 
-    _.writeFile(targetHandle, data)
+    await _.writeFile(targetHandle, data)
   }
 
   public async move(from: string, to: string, options: MoveOptions = {}): Promise<void> {

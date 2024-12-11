@@ -361,6 +361,23 @@ export async function writeFile(
   data: string | Uint8Array,
 ): Promise<void> {
   const writable = await handle.createWritable()
+  try {
   await writable.write(data)
+  } catch {
+  } finally {
   await writable.close()
+  }
+}
+
+export function mergeUint8Arrays(arrays: Uint8Array[]): Uint8Array {
+  let totalLength = arrays.reduce((acc, array) => acc + array.length, 0)
+  let result = new Uint8Array(totalLength)
+
+  let offset = 0
+  for (let array of arrays) {
+    result.set(array, offset)
+    offset += array.length
+  }
+
+  return result
 }

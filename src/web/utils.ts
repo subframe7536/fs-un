@@ -1,6 +1,8 @@
-import type { DirectoryRelationType } from '../types'
+import type { DirectoryRelationType, StreamEmitEvents } from '../types'
 import { basename, dirname } from 'pathe'
+import { type Emitter, mitt } from 'zen-mitt'
 import { type FsError, FsErrorCode, toFsError } from '../error'
+import { HIGH_WATER_MARK } from '../utils'
 
 export interface RootHandleOption {
   id?: string
@@ -362,10 +364,10 @@ export async function writeFile(
 ): Promise<void> {
   const writable = await handle.createWritable()
   try {
-  await writable.write(data)
+    await writable.write(data)
   } catch {
   } finally {
-  await writable.close()
+    await writable.close()
   }
 }
 
@@ -380,4 +382,40 @@ export function mergeUint8Arrays(arrays: Uint8Array[]): Uint8Array {
   }
 
   return result
+}
+
+export async function* streamRead(
+  ee: Emitter<StreamEmitEvents>,
+  stream: ReadableStream,
+  signal?: AbortSignal,
+  chunkSize: number = HIGH_WATER_MARK,
+): AsyncGenerator<Uint8Array> {
+  const reader = stream.getReader()
+  let buffer = new Uint8Array(0)
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+
+      if (done) {
+        if (buffer.length > 0) {
+          yield buffer
+        }
+        break
+      }
+
+      buffer = new Uint8Array([...buffer, ...value])
+
+      while (buffer.length >= chunkSize) {
+        yield buffer.slice(0, chunkSize)
+        buffer = buffer.slice(chunkSize)
+      }
+      if (signal?.aborted) {
+        ee.emit('end', true)
+        break
+      }
+    }
+  } finally {
+    reader.releaseLock()
+  }
 }

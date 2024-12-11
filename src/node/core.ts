@@ -1,5 +1,4 @@
-import type { Readable } from 'node:stream'
-import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType, ReadStreamEvent, ReadStreamOptions } from '..'
+import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType, ReadableStreamOptions, ReadStreamEvent } from '..'
 import { readFileSync } from 'node:fs'
 import fsp from 'node:fs/promises'
 import { dirname, join, normalize, parse, relative } from 'pathe'
@@ -73,42 +72,12 @@ export class NodeFS implements IFS<string> {
 
   public async readStream(
     path: string,
-    listener: ReadStreamEvent,
-    options: ReadStreamOptions = {},
-  ): Promise<void> {
-    const { length, position = 0, signal } = options
-    let stream: Readable | undefined
-    let fileHandle
-    try {
-      fileHandle = await fsp.open(this.parsePath(path), 'r')
-    } catch (error) {
-      await listener.error?.(handleRestError(error, 'readStream', path))
-      return
-    }
-    (async () => {
-      try {
-        const stream = fileHandle.createReadStream({
-          start: position,
-          end: length ? position + length - 1 : undefined,
-          autoClose: true,
-          encoding: null, // force stream to be read as raw bytes
-          highWaterMark: 64 * 1024,
-        })
-
-        for await (const chunk of stream) {
-          if (signal?.aborted) {
-            break
-          }
-          await listener.data?.(chunk)
-        }
-
-        await listener.end?.()
-      } catch (error) {
-        await listener.error?.(handleRestError(error, 'readStream', path))
-      } finally {
-        stream?.destroy()
-      }
-    })()
+    options: ReadableStreamOptions = {},
+  ): Promise<ReadStreamEvent> {
+    const { EventEmitter } = await import('node:events')
+    const ee = new EventEmitter<any>()
+    _.readFileIntoStream(ee, this.parsePath(path), options)
+    return ee
   }
 
   public async readText(path: string): Promise<string | undefined> {

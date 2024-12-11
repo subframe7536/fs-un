@@ -1,4 +1,4 @@
-import { getUserRoot, WebFS } from '../src/web'
+import { walk, WebFS } from '../src/web'
 
 // export default function App() {
 //   const [root, setRoot] = createSignal<FileSystemDirectoryHandle>()
@@ -21,13 +21,16 @@ import { getUserRoot, WebFS } from '../src/web'
 // }
 export default function App() {
   async function handleClick() {
-    // const handle = await window.showDirectoryPicker()
+    const handle = await window.showDirectoryPicker({ mode: 'readwrite' })
     // console.log(
-    //   await walk(handle, { includeDirs: true, maxDepth: 3, withRootPath: true }),
+    //   walk(handle, { includeDirs: true, maxDepth: 3, withRootPath: true }),
     // )
-    const manager = new WebFS(await getUserRoot())
-    await manager.mkdir('test/test/test')
-    console.log(await manager.exists('test/test/test'))
+    for await (const path of walk(handle, { includeDirs: true, maxDepth: 3, withRootPath: true })) {
+      console.log(path)
+    }
+    const manager = new WebFS(handle)
+    await manager.writeFile('test/test/test.txt', 'test')
+    console.log(await manager.exists('test/test/test.txt'))
   }
   return (
     <div>

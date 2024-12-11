@@ -1,7 +1,9 @@
-import type { DirectoryRelationType, MoveOptions, OverwriteOptions, PathType } from '../types'
-import { existsSync, promises as fsp } from 'node:fs'
+import type { EventEmitter } from 'node:stream'
+import type { DirectoryRelationType, MoveOptions, OverwriteOptions, PathType, ReadableStreamOptions, StreamEmitEvents } from '../types'
+import { existsSync, promises as fsp, type ReadStream } from 'node:fs'
 import { dirname, join, normalize, relative, resolve } from 'pathe'
 import { FsErrorCode, toFsError } from '../error'
+import { HIGH_WATER_MARK } from '../utils'
 import { handleRestError, isAlreadyExistError, isAnotherDeviceError, isDirError, isNoPermissionError, isNotExistsError } from './error'
 import { walk } from './walk'
 
@@ -178,4 +180,55 @@ export function getDirectoryRelation(sourcePath: string, targetPath: string): Di
     return 'child'
   }
   return 'diff'
+}
+
+export async function readFileIntoStream(
+  target: EventEmitter<StreamEmitEvents>,
+  url: string,
+  options: ReadableStreamOptions,
+  highWaterMark = HIGH_WATER_MARK,
+): Promise<void> {
+  let error: Error | undefined
+  let stream: ReadStream | undefined
+
+  try {
+    const { length, position = 0, signal } = options
+    // Check for cancellation
+    if (signal?.aborted) {
+      target.emit('end', true)
+      return
+    }
+    let fileHandle
+    try {
+      fileHandle = await fsp.open(url, 'r')
+    } catch (error) {
+      target.emit('error', handleRestError(error, 'readStream', url))
+      return
+    }
+
+    stream = fileHandle.createReadStream({
+      start: position,
+      end: length ? position + length - 1 : undefined,
+      autoClose: true,
+      encoding: null, // force stream to be read as raw bytes
+      highWaterMark,
+    })
+
+    for await (const chunk of stream) {
+      if (signal?.aborted) {
+        target.emit('end', true)
+        return
+      }
+      target.emit('data', chunk)
+    }
+  } catch (err) {
+    error = err as Error
+  } finally {
+    stream?.destroy()
+    if (typeof error !== 'undefined') {
+      target.emit('error', error)
+    }
+
+    target.emit('end')
+  }
 }

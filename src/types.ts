@@ -1,4 +1,4 @@
-import type { AnyFunction, Prettify, Promisable } from '@subframe7536/type-utils'
+import type { AnyFunction, Prettify } from '@subframe7536/type-utils'
 import type { FsError } from './error'
 
 export type DirectoryRelationType = 'same' | 'child' | 'parent' | 'diff'
@@ -52,21 +52,23 @@ export type ListState = {
 }
 
 export type ReadStreamEvent = {
-  /**
-   * Called when an error occurs
-   */
-  error?: (error: FsError) => Promisable<void>
-  /**
-   * Called when data is read
-   */
-  data?: (data: Uint8Array) => Promisable<void>
-  /**
-   * Called when stream ends
-   */
-  end?: () => Promisable<void>
+  on: {
+    /**
+     * Called when an error occurs
+     */
+    (event: 'error', callback: (error: FsError) => void): void
+    /**
+     * Called when data is read
+     */
+    (event: 'data', callback: (data: Uint8Array) => void): void
+    /**
+     * Called when stream ends
+     */
+    (event: 'end', callback: (isAborted?: true) => void): void
+  }
 }
 
-export type ReadStreamOptions = {
+export type ReadableStreamOptions = {
   /**
    * Start position in the stream
    * @default 0
@@ -115,7 +117,7 @@ export interface IStreamFs {
   /**
    * Streamly read file content
    */
-  readStream: (path: string, listener: ReadStreamEvent, options?: ReadStreamOptions) => Promise<void>
+  readStream: (path: string, options?: ReadableStreamOptions) => Promise<ReadStreamEvent>
 }
 
 export interface IFS<RootType = any> extends IReadonlyFS<RootType>, IStreamFs {
@@ -180,4 +182,10 @@ export type WalkOptions<T extends AnyFunction, N> = {
    * @default true
    */
   notNullish?: N
+}
+
+export type StreamEmitEvents = {
+  data: [Uint8Array]
+  end: [isAborted?: true]
+  error: [Error]
 }

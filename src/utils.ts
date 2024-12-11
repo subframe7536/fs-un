@@ -6,6 +6,8 @@ type DiffResult = {
   deleteList: FileAttr[]
 }
 
+export const HIGH_WATER_MARK = 2 << 18 // 256kb
+
 export function diffDir(oldArr: FileAttr[], newArr: FileAttr[]): DiffResult {
   const createMap = (arr: FileAttr[]): Map<string, FileAttr> => new Map(
     arr.map(item => [`${item.dir}/${item.name}${item.ext}`, item]),

@@ -1,5 +1,6 @@
-import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType, ReadStreamEvent, ReadStreamOptions } from '../types'
+import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType, ReadableStreamOptions, ReadStreamEvent, StreamEmitEvents } from '../types'
 import { basename, dirname, extname, join, normalize } from 'pathe'
+import { mitt } from 'zen-mitt'
 import { FsErrorCode, toFsError } from '../error'
 import * as _ from './utils'
 
@@ -55,41 +56,38 @@ export class WebFS implements IFS<FileSystemDirectoryHandle> {
 
   public async readStream(
     path: string,
-    listener: ReadStreamEvent,
-    options: ReadStreamOptions = {},
-  ): Promise<void> {
+    options: ReadableStreamOptions = {},
+  ): Promise<ReadStreamEvent> {
     const handle = await _.getHandleFromPath(this.root, 'readStream', path, { isFile: true })
     if (!handle) {
-      await listener.error?.(toFsError(FsErrorCode.NotExists, 'readStream', `"${path}" does not exist`, path))
-      return
+      throw toFsError(FsErrorCode.NotExists, 'readStream', `${path} does not exist`, path)
     }
+    const stream = mitt<StreamEmitEvents>()
+    const file = await handle.getFile();
     (async () => {
-      const { length, position = 0, signal } = options
       try {
-        const file = await handle.getFile()
-
-        const reader = file.slice(position, length ? position + length - 1 : undefined).stream().getReader()
-        let res = await reader.read()
-
-        while (!res.done) {
-          if (signal?.aborted) {
-            break
+        const { length, position, signal } = options
+        if (typeof length === 'number' && typeof position === 'number') {
+          let buf = new Uint8Array(await file.arrayBuffer())
+          if (position) {
+            buf = buf.slice(position)
           }
-
-          await listener.data?.(res.value)
-
-          if (signal?.aborted) {
-            break
+          if (length) {
+            buf = buf.slice(0, length)
           }
-
-          res = await reader.read()
+          stream.emit('data', buf)
+          stream.emit('end')
+        } else {
+          for await (const chunk of _.streamRead(stream, file.stream(), signal)) {
+            stream.emit('data', chunk)
+          }
+          stream.emit('end')
         }
-        await listener.end?.()
       } catch (error) {
-        const msg = error instanceof Error ? error.message : 'Unknown error'
-        await listener.error?.(toFsError(FsErrorCode.Unknown, 'readStream', msg, path))
+        stream.emit('error', _.toWebFsError(error, 'readStream', path))
       }
     })()
+    return stream
   }
 
   public async readText(path: string): Promise<string | undefined> {

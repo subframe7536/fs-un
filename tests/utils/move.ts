@@ -35,7 +35,7 @@ export function testMove(ifs: IFS) {
 
       // not exists
       const filePath2 = join(dirName1, 'tempFile2.txt')
-      expect(ifs.move(filePath2, 'asd', { rename: true })).rejects.toThrowError()
+      await expect(() => ifs.move(filePath2, 'asd', { rename: true })).rejects.toThrowError()
     })
     it('target file path have already exists a file', async () => {
       const filePath1 = join(dirName1, 'tempSameFile')
@@ -53,7 +53,7 @@ export function testMove(ifs: IFS) {
       const filePath3 = join(dirName1, 'tempSameFile1')
 
       await ifs.writeFile(filePath3, '111')
-      expect(ifs.move(filePath2, filePath3, { overwrite: false })).rejects.toThrowError()
+      await expect(() => ifs.move(filePath2, filePath3, { overwrite: false })).rejects.toThrowError()
     })
     it('target file path have already exists a dir', async () => {
       const filePath1 = join(dirName1, 'tempSameDir')
@@ -71,7 +71,7 @@ export function testMove(ifs: IFS) {
       const filePath3 = join(dirName1, 'tempSameDir1')
 
       await ifs.mkdir(filePath3)
-      expect(ifs.move(filePath2, filePath3, { overwrite: false })).rejects.toThrowError()
+      await expect(() => ifs.move(filePath2, filePath3, { overwrite: false })).rejects.toThrowError()
     })
   })
 
@@ -107,7 +107,7 @@ export function testMove(ifs: IFS) {
 
       // not exists
       const dirPath2 = join(dirName1, 'tempDir2')
-      expect(ifs.move(dirPath2, 'asd', { rename: true })).rejects.toThrowError()
+      await expect(() => ifs.move(dirPath2, 'asd', { rename: true })).rejects.toThrowError()
     })
     it('target dir path have already exists a file', async () => {
       const dirPath1 = join(dirName1, 'tempSameFile')
@@ -124,7 +124,7 @@ export function testMove(ifs: IFS) {
       // overwrite: false
       const dirPath3 = join(dirName1, 'tempSameFile1')
       await ifs.writeFile(dirPath3, '111')
-      expect(ifs.move(dirPath2, dirPath3, { overwrite: false })).rejects.toThrowError()
+      await expect(() => ifs.move(dirPath2, dirPath3, { overwrite: false })).rejects.toThrowError()
     })
     it('target dir path have already exists a dir', async () => {
       const dirPath1 = join(dirName1, 'tempSameDir')
@@ -142,7 +142,7 @@ export function testMove(ifs: IFS) {
       const dirPath3 = join(dirName1, 'tempSameDir1')
 
       await ifs.mkdir(dirPath3)
-      expect(ifs.move(dirPath2, dirPath3, { overwrite: false })).rejects.toThrowError()
+      await expect(() => ifs.move(dirPath2, dirPath3, { overwrite: false })).rejects.toThrowError()
     })
   })
 }

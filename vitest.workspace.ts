@@ -3,6 +3,7 @@ import { defineWorkspace } from 'vitest/config'
 function getBrowserConfig(name: 'chromium' | 'firefox' | 'webkit'): Parameters<typeof defineWorkspace>[0][0] {
   return {
     test: {
+      name,
       include: ['tests/browser.test.ts'],
       browser: {
         provider: 'playwright',
@@ -18,6 +19,7 @@ function getBrowserConfig(name: 'chromium' | 'firefox' | 'webkit'): Parameters<t
 export default defineWorkspace([
   {
     test: {
+      name: 'node',
       include: ['tests/node.test.ts'],
     },
   },

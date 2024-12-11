@@ -25,7 +25,7 @@ export function testCopy(ifs: IFS) {
       const sourcePath = join(dirName, 'tempFilenon-noexist.txt')
       const targetPath = join(dirName, 'non-exist', 'tempFileCopy.txt')
 
-      expect(ifs.copy(sourcePath, targetPath)).rejects.toThrowError()
+      await expect(() => ifs.copy(sourcePath, targetPath)).rejects.toThrowError()
     })
     it('target file path have already exists a file', async () => {
       const sourcePath = join(dirName, 'tempSameFile')
@@ -43,7 +43,7 @@ export function testCopy(ifs: IFS) {
       const targetPath2 = join(dirName, 'tempSameFile2')
 
       await ifs.writeFile(targetPath2, 'Hello, world!')
-      expect(ifs.copy(targetPath, targetPath2, { overwrite: false })).rejects.toThrowError()
+      await expect(() => ifs.copy(targetPath, targetPath2, { overwrite: false })).rejects.toThrowError()
     })
     it('target file path have already exists a dir', async () => {
       const sourcePath = join(dirName, 'tempSameDir')
@@ -61,7 +61,7 @@ export function testCopy(ifs: IFS) {
       const targetPath2 = join(dirName, 'tempDir2')
 
       await ifs.mkdir(targetPath2)
-      expect(ifs.copy(targetPath, targetPath2, { overwrite: false })).rejects.toThrowError()
+      await expect(() => ifs.copy(targetPath, targetPath2, { overwrite: false })).rejects.toThrowError()
     })
   })
 
@@ -94,7 +94,7 @@ export function testCopy(ifs: IFS) {
       const sourcePath = join(dirName1, 'tempFilenon-noexist')
       const targetPath = join(dirName1, 'non-exist', 'tempFileCopy')
 
-      expect(ifs.copy(sourcePath, targetPath)).rejects.toThrowError()
+      await expect(() => ifs.copy(sourcePath, targetPath)).rejects.toThrowError()
     })
     it('target dir path have already exists a dir', async () => {
       const dirPath1 = join(dirName1, 'tempSameDir')
@@ -111,7 +111,7 @@ export function testCopy(ifs: IFS) {
       const dirPath3 = join(dirName1, 'tempSameDir1')
 
       await ifs.mkdir(dirPath3)
-      expect(ifs.copy(dirPath2, dirPath3, { overwrite: false })).rejects.toThrowError()
+      await expect(() => ifs.copy(dirPath2, dirPath3, { overwrite: false })).rejects.toThrowError()
     })
 
     it('target dir path have already exists a file', async () => {
@@ -128,7 +128,7 @@ export function testCopy(ifs: IFS) {
       // overwrite: false
       const dirPath3 = join(dirName1, 'tempSameFile1')
       await ifs.writeFile(dirPath3, '111')
-      expect(ifs.copy(dirPath2, dirPath3, { overwrite: false })).rejects.toThrowError()
+      await expect(() => ifs.copy(dirPath2, dirPath3, { overwrite: false })).rejects.toThrowError()
     })
   })
 }

@@ -33,7 +33,7 @@ export async function* walk<
     : (path: string, isDir: any, data?: any) => transform(path.substring(root.length), isDir, data)
 
   async function* walkDir(directoryPath: string, depth: number): AsyncGenerator<Result> {
-    if (depth < 0 || signal?.aborted) {
+    if (depth <= 0 || signal?.aborted) {
       return
     }
 

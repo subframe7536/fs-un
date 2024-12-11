@@ -25,7 +25,7 @@ export async function* walk<
     transform = (p: string) => p,
   } = options
 
-  async function* _transform(path: string, handle: FileSystemHandle): AsyncGenerator<T | undefined> {
+  async function _transform(path: string, handle: FileSystemHandle): Promise<Result | undefined> {
     const result = await transform(path, handle)
     if (!notNullish || (result !== null && result !== undefined)) {
       return result as Result
@@ -78,7 +78,7 @@ export async function* walk<
     const _path = `${path}/${handle.name}`
     if (isDirectoryHandle(handle)) {
       if (pushDirectory) {
-        yield * pushDirectory(_path, handle)
+        yield * pushDirectory(`${_path}/`, handle)
       }
       const entries = handle.entries()
       for await (const [name, handle] of entries) {

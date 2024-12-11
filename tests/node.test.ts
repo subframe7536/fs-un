@@ -1,7 +1,7 @@
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { NodeFS } from '../src'
+import { NodeFS, walk } from '../src'
 import { testSuite } from './utils'
 
 export const basePath = dirname(fileURLToPath(import.meta.url))
-testSuite(new NodeFS(basePath))
+testSuite(new NodeFS(basePath), walk, path => `tests/${path}`, p => p)

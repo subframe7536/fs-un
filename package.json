@@ -45,31 +45,33 @@
     "release": "pnpm test && pnpm run build && bumpp --all && npm publish",
     "format": "eslint . --fix",
     "test": "vitest --run",
-    "test:dev": "vitest"
+    "test:dev": "vitest",
+    "postinstall": "pnpm exec playwright install --only-shell"
   },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "dependencies": {
-    "pathe": "^1.1.2"
+    "pathe": "^1.1.2",
+    "zen-mitt": "^3.0.0"
   },
   "devDependencies": {
-    "@solid-hooks/core": "^0.4.0",
-    "@subframe7536/eslint-config": "^0.9.4",
+    "@solid-hooks/core": "^0.4.1",
+    "@subframe7536/eslint-config": "^0.9.7",
     "@subframe7536/type-utils": "^0.1.6",
-    "@types/node": "^20.16.10",
+    "@types/node": "^22.10.1",
     "@types/wicg-file-system-access": "^2023.10.5",
-    "@vitest/browser": "^2.1.1",
-    "bumpp": "^9.6.1",
-    "eslint": "^9.11.1",
+    "@vitest/browser": "^2.1.8",
+    "bumpp": "^9.9.0",
+    "eslint": "^9.16.0",
     "idb-keyval": "^6.2.1",
-    "playwright": "^1.47.2",
-    "solid-js": "^1.9.1",
-    "tsup": "^8.3.0",
-    "typescript": "^5.6.2",
-    "vite": "^5.4.8",
-    "vite-plugin-solid": "^2.10.2",
-    "vitest": "^2.1.1"
+    "playwright": "^1.49.1",
+    "solid-js": "^1.9.3",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3",
+    "vite-plugin-solid": "^2.11.0",
+    "vitest": "^2.1.8"
   }
 }

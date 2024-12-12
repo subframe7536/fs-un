@@ -185,7 +185,7 @@ export async function getHandleFromPath<T extends boolean | undefined | 1 = unde
         return undefined
       }
       if (err instanceof DOMException && err.name === 'NotFoundError') {
-        throw toFsError(FsErrorCode.NotExists, fn, `"${path}" does not exist`, path)
+        throw toFsError(FsErrorCode.NotExists, fn, `${path} does not exist`, path)
       }
       throw toFsError(FsErrorCode.Unknown, fn, `unknown error, ${JSON.stringify(err)}`, path)
     }
@@ -383,9 +383,8 @@ export function mergeUint8Arrays(arrays: Uint8Array[]): Uint8Array {
 
   return result
 }
-
+export const ABORT = '$abort$'
 export async function* streamRead(
-  ee: Emitter<StreamEmitEvents>,
   stream: ReadableStream,
   signal?: AbortSignal,
   chunkSize: number = HIGH_WATER_MARK,
@@ -395,6 +394,9 @@ export async function* streamRead(
 
   try {
     while (true) {
+      if (signal?.aborted) {
+        throw ABORT
+      }
       const { done, value } = await reader.read()
 
       if (done) {
@@ -409,10 +411,6 @@ export async function* streamRead(
       while (buffer.length >= chunkSize) {
         yield buffer.slice(0, chunkSize)
         buffer = buffer.slice(chunkSize)
-      }
-      if (signal?.aborted) {
-        ee.emit('end', true)
-        break
       }
     }
   } finally {

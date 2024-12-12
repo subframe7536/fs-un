@@ -1,6 +1,6 @@
 import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType, ReadableStreamOptions, ReadStreamEvent, StreamEmitEvents } from '../types'
 import { basename, dirname, extname, join, normalize } from 'pathe'
-import { mitt } from 'zen-mitt'
+import { type Emitter, mitt } from 'zen-mitt'
 import { FsErrorCode, toFsError } from '../error'
 import * as _ from './utils'
 
@@ -37,7 +37,7 @@ export class WebFS implements IFS<FileSystemDirectoryHandle> {
   public async *list(path: string): AsyncIterable<ListState> {
     const handle = await _.getHandleFromPath(this.root, 'list', path, { isFile: false })
     if (!handle) {
-      throw toFsError(FsErrorCode.NotExists, 'list', `"${path}" does not exist`, path)
+      throw toFsError(FsErrorCode.NotExists, 'list', `${path} does not exist`, path)
     }
     for await (const entry of handle.values()) {
       yield {
@@ -62,8 +62,9 @@ export class WebFS implements IFS<FileSystemDirectoryHandle> {
     if (!handle) {
       throw toFsError(FsErrorCode.NotExists, 'readStream', `${path} does not exist`, path)
     }
-    const stream = mitt<StreamEmitEvents>()
-    const file = await handle.getFile();
+    let emitter: Emitter<StreamEmitEvents> | null = mitt<StreamEmitEvents>()
+    const file = await handle.getFile()
+    let isAborted: true | undefined
     (async () => {
       try {
         const { length, position, signal } = options
@@ -75,19 +76,26 @@ export class WebFS implements IFS<FileSystemDirectoryHandle> {
           if (length) {
             buf = buf.slice(0, length)
           }
-          stream.emit('data', buf)
-          stream.emit('end')
+          emitter.emit('data', buf)
+          emitter.emit('end')
         } else {
-          for await (const chunk of _.streamRead(stream, file.stream(), signal)) {
-            stream.emit('data', chunk)
+          for await (const chunk of _.streamRead(file.stream(), signal)) {
+            emitter.emit('data', chunk)
           }
-          stream.emit('end')
         }
       } catch (error) {
-        stream.emit('error', _.toWebFsError(error, 'readStream', path))
+        if (error === _.ABORT) {
+          isAborted = true
+        } else {
+          emitter.emit('error', _.toWebFsError(error, 'readStream', path))
+        }
+      } finally {
+        emitter.emit('end', isAborted)
+        emitter.off()
+        emitter = null
       }
     })()
-    return stream
+    return emitter
   }
 
   public async readText(path: string): Promise<string | undefined> {
@@ -151,11 +159,11 @@ export class WebFS implements IFS<FileSystemDirectoryHandle> {
       return
     }
     if (!options.overwrite && await _.exists(this.root, to)) {
-      throw toFsError(FsErrorCode.AlreadyExists, 'move', `"${to}" already exists, cannot overwrite`, to)
+      throw toFsError(FsErrorCode.AlreadyExists, 'move', `${to} already exists, cannot overwrite`, to)
     }
     const fromHandle = await _.exists(this.root, from)
     if (!fromHandle) {
-      throw toFsError(FsErrorCode.NotExists, 'move', `"${from}" does not exist`, from)
+      throw toFsError(FsErrorCode.NotExists, 'move', `${from} does not exist`, from)
     }
     await _.copy(fromHandle, this.root, to, 'move.copy')
     if ('remove' in fromHandle) {
@@ -172,11 +180,11 @@ export class WebFS implements IFS<FileSystemDirectoryHandle> {
     }
     const fromHandle = await _.exists(this.root, from)
     if (!fromHandle) {
-      throw toFsError(FsErrorCode.NotExists, fnName, `"${from}" does not exist`, from)
+      throw toFsError(FsErrorCode.NotExists, fnName, `${from} does not exist`, from)
     }
 
     if (!options.overwrite && await _.exists(this.root, to)) {
-      throw toFsError(FsErrorCode.AlreadyExists, fnName, `"${to}" already exists, cannot overwrite`, to)
+      throw toFsError(FsErrorCode.AlreadyExists, fnName, `${to} already exists, cannot overwrite`, to)
     }
 
     await _.copy(fromHandle, this.root, to, fnName)

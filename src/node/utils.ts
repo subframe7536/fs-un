@@ -46,7 +46,7 @@ export async function copy(
     if (overwrite) {
       await remove(to)
     } else {
-      throw toFsError(FsErrorCode.AlreadyExists, 'copy', `"${to}" already exist, cannot overwrite`, from, to)
+      throw toFsError(FsErrorCode.AlreadyExists, 'copy', `${to} already exist, cannot overwrite`, from, to)
     }
   } else {
     await mkdir(dirname(to))
@@ -84,7 +84,7 @@ export async function copy(
         await copyLink(from, to)
         break
       default:
-        throw toFsError(FsErrorCode.NotExists, 'copy', `"${from}" does not exist`, from, to)
+        throw toFsError(FsErrorCode.NotExists, 'copy', `${from} does not exist`, from, to)
     }
   } catch (err) {
     if (isNotExistsError(err)) {
@@ -130,7 +130,7 @@ export async function move(
 ): Promise<void> {
   const toExists = existsSync(to)
   if (!options.overwrite && toExists) {
-    throw new Error(`target path "${to}" already exists, cannot overwrite`)
+    throw new Error(`target path ${to} already exists, cannot overwrite`)
   }
   if (options.rename) {
     to = join(dirname(from), to)

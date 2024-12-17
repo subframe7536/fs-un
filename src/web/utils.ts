@@ -1,6 +1,5 @@
-import type { DirectoryRelationType, StreamEmitEvents } from '../types'
+import type { DirectoryRelationType } from '../types'
 import { basename, dirname } from 'pathe'
-import { type Emitter, mitt } from 'zen-mitt'
 import { type FsError, FsErrorCode, toFsError } from '../error'
 import { HIGH_WATER_MARK } from '../utils'
 

@@ -122,9 +122,9 @@ export class WebFS implements IFS<FileSystemDirectoryHandle> {
       typeof data === 'string'
         ? await (await handle.getFile()).text() + data
         : _.mergeUint8Arrays([
-          new Uint8Array(await (await handle.getFile()).arrayBuffer()),
-          data,
-        ]),
+            new Uint8Array(await (await handle.getFile()).arrayBuffer()),
+            data,
+          ]),
     )
   }
 

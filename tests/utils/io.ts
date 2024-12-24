@@ -16,7 +16,7 @@ export function testIO(ifs: IFS) {
       const path = join(dirName, 'test.txt')
       const content = 'Hello, world!'
       await ifs.writeFile(path, content)
-      const event = await ifs.readStream(path)
+      const event = ifs.readStream(path)
       const data = await new Promise<Uint8Array>((resolve, reject) => {
         event.on('data', resolve)
         event.on('error', reject)
@@ -28,7 +28,7 @@ export function testIO(ifs: IFS) {
       const path = join(dirName, 'testLength.txt')
       const content = 'Hello, world!'
       await ifs.writeFile(path, content)
-      const event = await ifs.readStream(path, { position: 1, length: 5 })
+      const event = ifs.readStream(path, { position: 1, length: 5 })
       const data = await new Promise<Uint8Array>((resolve, reject) => {
         event.on('data', resolve)
         event.on('error', reject)

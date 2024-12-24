@@ -54,18 +54,18 @@ export class WebFS implements IFS<FileSystemDirectoryHandle> {
     return handle ? new Uint8Array(await (await handle.getFile()).arrayBuffer()) : undefined
   }
 
-  public async readStream(
+  public readStream(
     path: string,
     options: ReadableStreamOptions = {},
-  ): Promise<ReadStreamEvent> {
-    const handle = await _.getHandleFromPath(this.root, 'readStream', path, { isFile: true })
-    if (!handle) {
-      throw toFsError(FsErrorCode.NotExists, 'readStream', `${path} does not exist`, path)
-    }
-    let emitter: Emitter<StreamEmitEvents> | null = mitt<StreamEmitEvents>()
-    const file = await handle.getFile()
-    let isAborted: true | undefined
+  ): ReadStreamEvent {
+    let emitter: Emitter<StreamEmitEvents> | null = mitt<StreamEmitEvents>();
     (async () => {
+      let isAborted: true | undefined
+      const handle = await _.getHandleFromPath(this.root, 'readStream', path, { isFile: true })
+      if (!handle) {
+        throw toFsError(FsErrorCode.NotExists, 'readStream', `${path} does not exist`, path)
+      }
+      const file = await handle.getFile()
       try {
         const { length, position, signal } = options
         if (typeof length === 'number' && typeof position === 'number') {

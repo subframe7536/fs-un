@@ -116,7 +116,7 @@ export interface IStreamFs {
   /**
    * Streamly read file content
    */
-  readStream: (path: string, options?: ReadableStreamOptions) => Promise<ReadStreamEvent>
+  readStream: (path: string, options?: ReadableStreamOptions) => ReadStreamEvent
 }
 
 export interface IFS<RootType = any> extends IReadonlyFS<RootType>, IStreamFs {

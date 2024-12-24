@@ -70,11 +70,10 @@ export class NodeFS implements IFS<string> {
     }
   }
 
-  public async readStream(
+  public readStream(
     path: string,
     options: ReadableStreamOptions = {},
-  ): Promise<ReadStreamEvent> {
-    const { EventEmitter } = await import('node:events')
+  ): ReadStreamEvent {
     const ee = new EventEmitter<any>()
     _.readFileIntoStream(ee, this.parsePath(path), options)
     return ee

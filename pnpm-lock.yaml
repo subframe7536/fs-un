@@ -19,8 +19,8 @@ importers:
         specifier: ^0.4.1
         version: 0.4.1(solid-js@1.9.3)
       '@subframe7536/eslint-config':
-        specifier: ^1.1.1
-        version: 1.1.1(@typescript-eslint/utils@8.18.2(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint-plugin-solid@0.14.5(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2)(vitest@2.1.8)
+        specifier: ^1.1.2
+        version: 1.1.2(@typescript-eslint/utils@8.18.2(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint-plugin-solid@0.14.5(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2)(vitest@2.1.8)
       '@subframe7536/type-utils':
         specifier: ^0.1.6
         version: 0.1.6
@@ -879,8 +879,8 @@ packages:
     peerDependencies:
       eslint: '>=8.40.0'
 
-  '@subframe7536/eslint-config@1.1.1':
-    resolution: {integrity: sha512-S4cvpPiXufXL/cezK10Q+ok9+jeNL00EX5XHsgi6xBQBW0gzbFmWxPVikxNaLDtZUGSNjKqCff5evfjCFFmzBg==}
+  '@subframe7536/eslint-config@1.1.2':
+    resolution: {integrity: sha512-C858xa3ptjh6qTkicvJuLvGbs7zTVrIjbTjJY/9BlOd/dg1uO18UK1+XwY9g+zhUVuPbAOkQfRTYumN64FOIsg==}
     peerDependencies:
       '@eslint-react/eslint-plugin': ^1.19.0
       '@prettier/plugin-xml': ^3.4.1
@@ -3524,7 +3524,7 @@ snapshots:
       - supports-color
       - typescript
 
-  '@subframe7536/eslint-config@1.1.1(@typescript-eslint/utils@8.18.2(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint-plugin-solid@0.14.5(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2)(vitest@2.1.8)':
+  '@subframe7536/eslint-config@1.1.2(@typescript-eslint/utils@8.18.2(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint-plugin-solid@0.14.5(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2)(vitest@2.1.8)':
     dependencies:
       '@eslint-community/eslint-plugin-eslint-comments': 4.4.1(eslint@9.17.0(jiti@2.4.2))
       '@eslint/markdown': 6.2.1

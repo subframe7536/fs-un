@@ -58,7 +58,7 @@
   },
   "devDependencies": {
     "@solid-hooks/core": "^0.4.1",
-    "@subframe7536/eslint-config": "^1.1.1",
+    "@subframe7536/eslint-config": "^1.1.2",
     "@subframe7536/type-utils": "^0.1.6",
     "@types/node": "^22.10.2",
     "@types/wicg-file-system-access": "^2023.10.5",

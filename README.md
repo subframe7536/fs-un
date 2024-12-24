@@ -2,15 +2,27 @@
 
 Unified util to manage files and directories inside a directory on different platforms
 
-**In progress, breaking changes expected between patch versions!!**
+**WIP, breaking changes expected between patch versions!!**
+
+## Install
+
+```sh
+npm install fs-un
+```
+
+```sh
+yarn add fs-un
+```
+
+```sh
+pnpm add fs-un
+```
 
 ## Usage
 
-## Support Platforms
-
 ### Node
 
-Nodejs `fs` module
+Using nodejs `fs` module
 
 ```ts
 import { NodeFS, walk } from 'fs-un'
@@ -24,7 +36,7 @@ for await (const path of walk(ifs.root, { includeDirs: true, transform: (path, i
 
 ### Web
 
-[`File Systen Access API`](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API)
+Using [File Systen Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API)
 
 ```ts
 import { getOpfsRoot, getUserRoot, isSupportOpfsRoot, isSupportUserRoot, walk, WebFS } from 'fs-un/web'

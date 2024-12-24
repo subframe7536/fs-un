@@ -16,7 +16,7 @@ export class FsError extends Error {
     public path: string,
     public path2?: string,
   ) {
-    super(`[${code} in ${fn}()] ${message}, ${path2 ? `${path} -> ${path2}` : ''}`)
+    super(`[${code} in ${fn}()] ${message}${path2 ? `, ${path} -> ${path2}` : ''}`)
   }
 }
 
@@ -27,5 +27,5 @@ export function toFsError(
   path: string,
   path2?: string,
 ): FsError {
-  return new FsError(code, fn, msg, normalize(path), path2?.normalize(path2))
+  return new FsError(code, fn, msg, normalize(path), path2 ? normalize(path2) : undefined)
 }

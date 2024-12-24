@@ -1,7 +1,17 @@
-import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType, ReadableStreamOptions, ReadStreamEvent } from '..'
+import type {
+  FileAttr,
+  IFS,
+  ListState,
+  MoveOptions,
+  OverwriteOptions,
+  PathType,
+  ReadableStreamOptions,
+  ReadStreamEvent,
+} from '../types'
+import EventEmitter from 'node:events'
 import { readFileSync } from 'node:fs'
 import fsp from 'node:fs/promises'
-import { dirname, join, normalize, parse, relative } from 'pathe'
+import { basename, dirname, extname, join, normalize, relative } from 'pathe'
 import { FsErrorCode, toFsError } from '../error'
 import * as _e from './error'
 import { handleRestError } from './error'
@@ -27,8 +37,14 @@ export class NodeFS implements IFS<string> {
       if (stat.isDirectory()) {
         return undefined
       }
-      const { dir, name, ext } = parse(this.root ? relative(this.root, path) : path)
-      return { dir, name, ext, size: stat.size, modifiedTime: stat.mtime }
+      const ext = extname(path)
+      return {
+        dir: relative(this.root, dirname(path)),
+        name: basename(path, ext),
+        ext,
+        size: stat.size,
+        modifiedTime: stat.mtime,
+      }
     } catch (error) {
       if (_e.isNotExistsError(error)) {
         return undefined

@@ -23,12 +23,12 @@ export class WebFS implements IFS<FileSystemDirectoryHandle> {
       return undefined
     }
     const file = await handle.getFile()
-    const extName = extname(file.name)
+    const ext = extname(file.name)
 
     return {
-      ext: extName,
-      name: basename(file.name, extName),
       dir: dirname(path),
+      name: basename(file.name, ext),
+      ext,
       modifiedTime: new Date(file.lastModified),
       size: file.size,
     }

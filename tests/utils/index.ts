@@ -1,5 +1,6 @@
 import type { IFS, walk as Twalk } from '../../src'
 import { testCopy } from './copy'
+import { testFileAttr } from './fileAttr'
 import { testIO } from './io'
 import { testMkdir } from './mkdir'
 import { testMove } from './move'
@@ -15,5 +16,6 @@ export function testSuite<T>(
   testCopy(ifs)
   testMove(ifs)
   testIO(ifs)
+  testFileAttr(ifs)
   testWalk(ifs, walk, getWalkRoot, getDir)
 }

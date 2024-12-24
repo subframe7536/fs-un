@@ -18,16 +18,15 @@ import { handleRestError } from './error'
 import * as _ from './utils'
 
 export class NodeFS implements IFS<string> {
-  private parsePath: (p: string) => string
   public constructor(
     /**
      * Absolute path to the root directory
      */
     public readonly root: string,
-  ) {
-    this.parsePath = this.root
-      ? p => join(this.root!, p).replace(/\/$/, '')
-      : p => normalize(p)
+  ) { }
+
+  private parsePath(p: string): string {
+    return join(this.root!, p).replace(/\/$/, '')
   }
 
   public async fileAttr(path: string): Promise<FileAttr | undefined> {

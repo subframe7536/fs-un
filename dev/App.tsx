@@ -1,4 +1,4 @@
-import { walk, WebFS } from '../src/web'
+import { getUserRoot, walk, WebFS } from '../src/web'
 
 // export default function App() {
 //   const [root, setRoot] = createSignal<FileSystemDirectoryHandle>()
@@ -21,7 +21,7 @@ import { walk, WebFS } from '../src/web'
 // }
 export default function App() {
   async function handleClick() {
-    const handle = await window.showDirectoryPicker({ mode: 'readwrite' })
+    const handle = await getUserRoot({ mode: 'readwrite' })
     // console.log(
     //   walk(handle, { includeDirs: true, maxDepth: 3, withRootPath: true }),
     // )

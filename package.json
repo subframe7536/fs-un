@@ -46,7 +46,7 @@
     "format": "eslint . --fix",
     "test": "vitest --run",
     "test:dev": "vitest",
-    "postinstall": "pnpm exec playwright install --only-shell"
+    "playwright": "pnpm exec playwright install --only-shell"
   },
   "publishConfig": {
     "access": "public",

@@ -38,6 +38,8 @@ for await (const path of walk(ifs.root, { includeDirs: true, transform: (path, i
 
 Using [File Systen Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API)
 
+- In Safari, `writeFile` or `appendFile` only can be used in Web Worker, due to `createWritable()` api missing
+
 ```ts
 import { getOpfsRoot, getUserRoot, isSupportOpfsRoot, isSupportUserRoot, walk, WebFS } from 'fs-un/web'
 

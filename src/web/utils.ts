@@ -361,12 +361,52 @@ export async function writeFile(
   handle: FileSystemFileHandle,
   data: string | Uint8Array,
 ): Promise<void> {
-  const writable = await handle.createWritable()
+  if ('createSyncAccessHandle' in handle) {
+    return await writeFileSync(handle, data)
+  }
+  const writable = await (handle as FileSystemFileHandle).createWritable()
   try {
     await writable.write(data)
-  } catch {
   } finally {
     await writable.close()
+  }
+}
+
+declare global {
+  interface FileSystemFileHandle {
+    /**
+     * https://developer.mozilla.org/zh-CN/docs/Web/API/FileSystemFileHandle/createSyncAccessHandle
+     */
+    createSyncAccessHandle: (options?: { mode: 'read-only' | 'readwrite' | 'readwrite-unsafe' }) => Promise<FileSystemSyncAccessHandle>
+  }
+  /**
+   * https://developer.mozilla.org/zh-CN/docs/Web/API/FileSystemSyncAccessHandle
+   */
+  interface FileSystemSyncAccessHandle {
+    read: (buffer: ArrayBuffer | ArrayBufferView, options?: { at: number }) => void
+    write: (buffer: ArrayBuffer | ArrayBufferView, options?: { at: number }) => void | Promise<void>
+    truncate: (newSize: number) => void | Promise<void>
+    flush: () => void | Promise<void>
+    getSize: () => number
+    close: () => void | Promise<void>
+  }
+}
+
+/**
+ * Write file through sync access handle, only works in Web Worker
+ * https://developer.mozilla.org/zh-CN/docs/Web/API/FileSystemSyncAccessHandle
+ */
+export async function writeFileSync(
+  handle: FileSystemFileHandle,
+  data: string | Uint8Array,
+): Promise<void> {
+  const access = await handle.createSyncAccessHandle()
+  const dataArray = typeof data === 'string' ? new TextEncoder().encode(data) : data
+  try {
+    await access.write(dataArray)
+    await access.flush()
+  } finally {
+    await access.close()
   }
 }
 

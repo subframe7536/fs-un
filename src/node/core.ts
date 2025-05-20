@@ -119,7 +119,7 @@ export class NodeFS implements IFS<string> {
   public async writeFile(path: string, data: string | Uint8Array, options: OverwriteOptions = {}): Promise<void> {
     path = this.parsePath(path)
 
-    if (!options.overwrite && await _.exists(path)) {
+    if (!(options.overwrite ?? true) && await _.exists(path)) {
       throw toFsError(
         FsErrorCode.AlreadyExists,
         'writeFile',

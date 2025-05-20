@@ -132,7 +132,7 @@ export interface IFS<RootType = any> extends IReadonlyFS<RootType>, IStreamFs {
   appendFile: (path: string, data: string | Uint8Array) => Promise<void>
 
   /**
-   * Write data to file
+   * Write data to file, overwrite by default
    */
   writeFile: (path: string, data: string | Uint8Array, options?: OverwriteOptions) => Promise<void>
 

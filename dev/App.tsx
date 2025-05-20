@@ -20,21 +20,32 @@ import { getUserRoot, walk, WebFS } from '../src/web'
 //   )
 // }
 export default function App() {
+  let handle: FileSystemDirectoryHandle | null
   async function handleClick() {
-    const handle = await getUserRoot({ mode: 'readwrite' })
+    handle = await getUserRoot({ mode: 'readwrite' })
     // console.log(
     //   walk(handle, { includeDirs: true, maxDepth: 3, withRootPath: true }),
     // )
     for await (const path of walk(handle, { includeDirs: true, maxDepth: 3, withRootPath: true })) {
       console.log(path)
     }
+  }
+
+  async function write() {
+    if (!handle) {
+      console.log('No file handle')
+      return
+    }
     const manager = new WebFS(handle)
-    await manager.writeFile('test/test/test.txt', 'test')
-    console.log(await manager.exists('test/test/test.txt'))
+    const p = 'test/test.txt'
+    await manager.remove(p)
+    await manager.writeFile(p, 'test')
+    console.log(await manager.exists(p))
   }
   return (
     <div>
-      <button onClick={handleClick}>fetch</button>
+      <button onClick={handleClick}>1. get dir</button>
+      <button onClick={write}>2. write</button>
     </div>
   )
 }

@@ -136,7 +136,7 @@ export class WebFS implements IFS<FileSystemDirectoryHandle> {
     data: string | Uint8Array,
     options: OverwriteOptions = {},
   ): Promise<void> {
-    if (!options.overwrite && await _.exists(this.root, path)) {
+    if (!(options.overwrite ?? true) && await _.exists(this.root, path)) {
       throw toFsError(
         FsErrorCode.AlreadyExists,
         'writeFile',

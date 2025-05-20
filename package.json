@@ -1,7 +1,7 @@
 {
   "name": "fs-un",
   "type": "module",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Universal utils to manage files and directories inside a directory on different platforms",
   "author": "subframe7536",
   "license": "MIT",

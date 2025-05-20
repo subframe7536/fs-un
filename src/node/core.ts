@@ -78,8 +78,7 @@ export class NodeFS implements IFS<string> {
   public async readByte(path: string): Promise<Uint8Array | undefined> {
     try {
       // sync style is much faster than async
-      const buf = readFileSync(this.parsePath(path))
-      return buf ? Uint8Array.from(buf) : undefined
+      return readFileSync(this.parsePath(path))
     } catch (error) {
       if (_e.isNotExistsError(error) || _e.isDirError(error)) {
         return undefined

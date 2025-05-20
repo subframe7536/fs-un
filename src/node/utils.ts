@@ -74,23 +74,8 @@ export async function copy(
         if (from.endsWith('asar') && process?.versions?.electron) {
           // @ts-expect-error electron
           (await import('node:original-fs')).copyFileSync(from, to)
-        } else if (
-          'cp' in fsp) {
-          await fsp.cp(from, to, { recursive: true })
         } else {
-          await walk(from, {
-            includeDirs: true,
-            withRootPath: true,
-            transform: async (srcPath, isDir) => {
-              const destPath = resolve(to, relative(from, srcPath))
-              if (isDir) {
-                await mkdir(destPath)
-              } else {
-                await mkdir(dirname(destPath))
-                await fsp.copyFile(srcPath, destPath)
-              }
-            },
-          })
+          await fsp.cp(from, to, { recursive: true })
         }
         break
       case 'file':

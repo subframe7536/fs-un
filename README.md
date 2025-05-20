@@ -22,7 +22,7 @@ pnpm add fs-un
 
 ### Node
 
-Using nodejs `fs` module
+Using nodejs `fs` module. `nodejs@^16`
 
 ```ts
 import { NodeFS, walk } from 'fs-un'

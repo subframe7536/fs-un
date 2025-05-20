@@ -8,10 +8,13 @@ import type {
   ReadableStreamOptions,
   ReadStreamEvent,
 } from '../types'
+
 import EventEmitter from 'node:events'
 import { readFileSync } from 'node:fs'
 import fsp from 'node:fs/promises'
-import { basename, dirname, extname, join, normalize, relative } from 'pathe'
+
+import { basename, dirname, extname, join, relative } from 'pathe'
+
 import { FsErrorCode, toFsError } from '../error'
 import * as _e from './error'
 import { handleRestError } from './error'
@@ -52,7 +55,7 @@ export class NodeFS implements IFS<string> {
     }
   }
 
-  public async *list(path: string): AsyncIterable<ListState> {
+  public async* list(path: string): AsyncIterable<ListState> {
     try {
       const data = await fsp.opendir(this.parsePath(path))
       for await (const dir of data) {

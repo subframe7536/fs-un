@@ -1,6 +1,8 @@
-import type { Promisable } from '@subframe7536/type-utils'
 import type { WalkOptions } from '../types'
-import { type Dirent, readdirSync } from 'node:fs'
+import type { Promisable } from '@subframe7536/type-utils'
+import type { Dirent } from 'node:fs'
+
+import { readdirSync } from 'node:fs'
 
 /**
  * Walk a directory
@@ -55,7 +57,7 @@ export async function* walk<
       const currentPath = `${directoryPath}/${dirent.name}`
 
       if (dirent.isDirectory()) {
-        yield * walkDir(currentPath, depth - 1)
+        yield* walkDir(currentPath, depth - 1)
       } else if (!filter || filter(currentPath, false)) {
         const result = await _transform(currentPath, false, dirent)
         if (!notNullish || result != null) {
@@ -65,5 +67,5 @@ export async function* walk<
     }
   }
 
-  yield * walkDir(root, maxDepth)
+  yield* walkDir(root, maxDepth)
 }

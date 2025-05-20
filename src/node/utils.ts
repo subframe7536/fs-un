@@ -1,16 +1,32 @@
+import type {
+  DirectoryRelationType,
+  MoveOptions,
+  OverwriteOptions,
+  PathType,
+  ReadableStreamOptions,
+  StreamEmitEvents,
+} from '../types'
+import type { ReadStream } from 'node:fs'
 import type { EventEmitter } from 'node:stream'
-import type { DirectoryRelationType, MoveOptions, OverwriteOptions, PathType, ReadableStreamOptions, StreamEmitEvents } from '../types'
-import { existsSync, promises as fsp, type ReadStream } from 'node:fs'
+
+import { existsSync, promises as fsp } from 'node:fs'
+
 import { dirname, join, normalize, relative, resolve } from 'pathe'
+
 import { FsErrorCode, toFsError } from '../error'
 import { HIGH_WATER_MARK } from '../utils'
-import { handleRestError, isAlreadyExistError, isAnotherDeviceError, isDirError, isNoPermissionError, isNotExistsError } from './error'
+import {
+  handleRestError,
+  isAlreadyExistError,
+  isAnotherDeviceError,
+  isDirError,
+  isNoPermissionError,
+  isNotExistsError,
+} from './error'
 import { walk } from './walk'
 
 /**
- * create a directory, auto skip if exists
- *
- * return ensured path. if is `undefined`, `path` is a exist file
+ * Recursively create a directory, auto skip if exists
  */
 export async function mkdir(path: string): Promise<void> {
   try {
@@ -33,7 +49,7 @@ async function copyLink(from: string, to: string): Promise<void> {
   }
 }
 /**
- * copy files or directories, auto create parent directory
+ * Copy files or directories, auto create parent directory
  */
 export async function copy(
   from: string,
@@ -96,7 +112,7 @@ export async function copy(
 }
 
 /**
- * check if path exists, if second param is true, will check 'link'
+ * Check if path exists, if second param is true, will check 'link'
  */
 export async function exists(path: string): Promise<PathType | 'link'> {
   try {
@@ -119,9 +135,7 @@ export async function exists(path: string): Promise<PathType | 'link'> {
 }
 
 /**
- * move files or directories, auto create parent directory.
- *
- * overwrite by default
+ * Move files or directories, auto create parent directory.
  */
 export async function move(
   from: string,
@@ -130,7 +144,7 @@ export async function move(
 ): Promise<void> {
   const toExists = existsSync(to)
   if (!options.overwrite && toExists) {
-    throw new Error(`target path ${to} already exists, cannot overwrite`)
+    throw new Error(`Target path ${to} already exists, cannot overwrite`)
   }
   if (options.rename) {
     to = join(dirname(from), to)
@@ -157,7 +171,7 @@ export async function move(
 }
 
 /**
- * remove directory and files recursively
+ * Remove directory and file recursively
  */
 export async function remove(path: string): Promise<void> {
   try {

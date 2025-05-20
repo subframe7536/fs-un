@@ -1,4 +1,6 @@
-import { type FsError, FsErrorCode, toFsError } from '../error'
+import type { FsError } from '../error'
+
+import { FsErrorCode, toFsError } from '../error'
 
 export function isNotExistsError(err: any): boolean {
   return err.code === 'ENOENT'

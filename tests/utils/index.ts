@@ -1,4 +1,5 @@
 import type { IFS, walk as Twalk } from '../../src'
+
 import { testCopy } from './copy'
 import { testFileAttr } from './fileAttr'
 import { testIO } from './io'

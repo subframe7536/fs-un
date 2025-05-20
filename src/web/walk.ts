@@ -1,5 +1,6 @@
-import type { Promisable } from '@subframe7536/type-utils'
 import type { WalkOptions } from '../types'
+import type { Promisable } from '@subframe7536/type-utils'
+
 import { isDirectoryHandle, isFileHandle } from './utils'
 
 /**
@@ -78,21 +79,21 @@ export async function* walk<
     const _path = `${path}/${handle.name}`
     if (isDirectoryHandle(handle)) {
       if (pushDirectory) {
-        yield * pushDirectory(`${_path}/`, handle)
+        yield* pushDirectory(`${_path}/`, handle)
       }
       const entries = handle.entries()
       for await (const [name, handle] of entries) {
         if (!filter || filter(name, isDirectoryHandle(handle))) {
-          yield * build(handle, _path, depth - 1)
+          yield* build(handle, _path, depth - 1)
         }
       }
     } else if (isFileHandle(handle)) {
-      yield * pushFile(_path, handle)
+      yield* pushFile(_path, handle)
     }
   }
 
   const basePath = withRootPath ? root.name : ''
   for await (const [, handle] of root.entries()) {
-    yield * build(handle, basePath, maxDepth - 1)
+    yield* build(handle, basePath, maxDepth - 1)
   }
 }

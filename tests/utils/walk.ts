@@ -1,5 +1,6 @@
-import type { Promisable } from '@subframe7536/type-utils'
 import type { IFS, walk as Twalk } from '../../src'
+import type { Promisable } from '@subframe7536/type-utils'
+
 import { join } from 'pathe'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 

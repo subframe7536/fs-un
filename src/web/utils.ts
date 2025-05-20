@@ -1,6 +1,9 @@
+import type { FsError } from '../error'
 import type { DirectoryRelationType } from '../types'
+
 import { basename, dirname } from 'pathe'
-import { type FsError, FsErrorCode, toFsError } from '../error'
+
+import { FsErrorCode, toFsError } from '../error'
 import { HIGH_WATER_MARK } from '../utils'
 
 export interface RootHandleOption {

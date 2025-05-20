@@ -1,4 +1,5 @@
 import { get, set } from 'idb-keyval'
+
 import { getUserRoot } from '../src/web'
 
 export async function initHandle() {

@@ -1,6 +1,9 @@
 import type { FileAttr, IFS, ListState, MoveOptions, OverwriteOptions, PathType, ReadableStreamOptions, ReadStreamEvent, StreamEmitEvents } from '../types'
+import type { Emitter } from 'zen-mitt'
+
 import { basename, dirname, extname, join, normalize } from 'pathe'
-import { type Emitter, mitt } from 'zen-mitt'
+import { mitt } from 'zen-mitt'
+
 import { FsErrorCode, toFsError } from '../error'
 import * as _ from './utils'
 
@@ -34,7 +37,7 @@ export class WebFS implements IFS<FileSystemDirectoryHandle> {
     }
   }
 
-  public async *list(path: string): AsyncIterable<ListState> {
+  public async* list(path: string): AsyncIterable<ListState> {
     const handle = await _.getHandleFromPath(this.root, 'list', path, { isFile: false })
     if (!handle) {
       throw toFsError(FsErrorCode.NotExists, 'list', `${path} does not exist`, path)

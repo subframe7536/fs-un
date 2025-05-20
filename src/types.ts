@@ -1,5 +1,5 @@
-import type { AnyFunction, Prettify } from '@subframe7536/type-utils'
 import type { FsError } from './error'
+import type { AnyFunction, Prettify } from '@subframe7536/type-utils'
 
 export type DirectoryRelationType = 'same' | 'child' | 'parent' | 'diff'
 
